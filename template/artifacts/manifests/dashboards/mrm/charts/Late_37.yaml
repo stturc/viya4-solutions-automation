@@ -1,0 +1,79 @@
+slice_name: Late
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 9__table
+  viz_type: big_number_total
+  metric: count
+  adhoc_filters:
+  - expressionType: SIMPLE
+    subject: _mrm_actualEndDt
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_cehrbzji85m_bnh94p5vcvw
+  - expressionType: SIMPLE
+    subject: _mrm_reviewStatus
+    operator: NOT IN
+    operatorId: NOT_IN
+    comparator:
+    - mrm_VALIDATION_COMPLETED
+    - 'NULL'
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_yjbfetzpz5_yeo11xdpl7e
+  - expressionType: SIMPLE
+    subject: _mrm_plannedEndDt
+    operator: TEMPORAL_RANGE
+    operatorId: TEMPORAL_RANGE
+    comparator: ' : now'
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_hi5khzuauho_1or0qchh021
+  - expressionType: SIMPLE
+    subject: tr_mrm_reviewStatus
+    operator: IN
+    operatorId: IN
+    comparator:
+    - Edit
+    - Manage Issues
+    - Pending approval
+    - Under review
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_n5fnmdroeoi_wt42bfu2ry
+  header_font_size: 0.6
+  subheader_font_size: 0.2
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  conditional_formatting: []
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":9,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_actualEndDt","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_mrm_reviewStatus","op":"NOT IN","val":["mrm_VALIDATION_COMPLETED","NULL"]},{"col":"_mrm_plannedEndDt","op":"TEMPORAL_RANGE","val":"
+  : now"},{"col":"tr_mrm_reviewStatus","op":"IN","val":["Edit","Manage Issues","Pending
+  approval","Under review"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"9__table","viz_type":"big_number_total","metric":"count","adhoc_filters":[{"expressionType":"SIMPLE","subject":"_mrm_actualEndDt","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_cehrbzji85m_bnh94p5vcvw"},{"expressionType":"SIMPLE","subject":"_mrm_reviewStatus","operator":"NOT
+  IN","operatorId":"NOT_IN","comparator":["mrm_VALIDATION_COMPLETED","NULL"],"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_yjbfetzpz5_yeo11xdpl7e"},{"expressionType":"SIMPLE","subject":"_mrm_plannedEndDt","operator":"TEMPORAL_RANGE","operatorId":"TEMPORAL_RANGE","comparator":"
+  : now","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_hi5khzuauho_1or0qchh021"},{"expressionType":"SIMPLE","subject":"tr_mrm_reviewStatus","operator":"IN","operatorId":"IN","comparator":["Edit","Manage
+  Issues","Pending approval","Under review"],"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_n5fnmdroeoi_wt42bfu2ry"}],"header_font_size":0.6,"subheader_font_size":0.2,"y_axis_format":"SMART_NUMBER","time_format":"smart_date","conditional_formatting":[],"extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 9c8be3c6-7715-4933-9851-f4a0e2015767
+version: 1.0.0
+dataset_uuid: fc4962ad-9158-4b7a-9143-9b2dfbe99695

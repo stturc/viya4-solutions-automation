@@ -1,0 +1,69 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Delete Resource group
+run-name: delete-resource-group
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+      mapp_rg_name:
+        description: 'Managed Application Resource Group Name'
+        required: true
+        type: string
+      monitor_artifact_name:
+        description: 'Artifact name to download'
+        required: true
+        type: string
+      delete_if_succeeded:
+        description: 'Delete resource group if the deployment succeeded'
+        required: true
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  delete-resource-group:
+    name: delete-resource-group
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.monitor_artifact_name }}
+
+      - name: Delete Resource Group 
+        id: delete-resource-group
+        env:
+          mapp_rg: ${{ inputs.mapp_rg_name }}
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          # source the downloaded artifact - it should contain the status variable
+          source ${{ inputs.monitor_artifact_name }}
+          
+          echo "::group::Deleting Resource Group"
+          if [ "${status^^}" == "SUCCEEDED" ] && [ "${{ inputs.delete_if_succeeded }}" == "true" ]
+          then
+            echo "Resource group ${mapp_rg} deletion initiated. Status: ${status} - delete_if_succeeded: ${{ inputs.delete_if_succeeded }}"
+            az group delete --name ${mapp_rg} --subscription ${subscription_id} --yes --no-wait
+            echo "Resource group ${mapp_rg} deletion initiated."
+          else
+            echo "Resource group ${mapp_rg} deletion skipped. Status: ${status} - delete_if_succeeded: ${{ inputs.delete_if_succeeded }}"
+          fi
+          echo "::endgroup::"

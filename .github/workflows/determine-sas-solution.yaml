@@ -1,0 +1,42 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Determine SAS Solution
+run-name: determine-sas-solution
+
+on:
+  workflow_call:
+    inputs:
+      viya_solution_name:
+        description: 'SAS Solution to deploy'
+        required: true
+        type: string
+
+    outputs:
+      viya_solution: 
+        value: ${{ jobs.determine-sas-solution.outputs.viya_solution }}
+
+jobs:
+  determine-sas-solution:
+    runs-on: ubuntu-latest
+
+    outputs:
+      viya_solution: ${{ steps.determine_viya_solution.outputs.viya_solution }}
+
+    steps:
+      - name: Determine Viya solution
+        id: determine_viya_solution
+        run: |
+          viya_solution_name="${{ inputs.viya_solution_name }}"
+          
+          echo "::group::Determine Viya Solution"
+          case "$viya_solution_name" in
+            "SAS Model Risk Management") viya_solution="MRM" ;;
+            *) echo "Unknown solution name: $viya_solution_name"; exit 1 ;;
+          esac
+          echo "Determined Viya solution: $viya_solution"
+          echo "::endgroup::"
+          
+          echo "viya_solution=$viya_solution" >> $GITHUB_OUTPUT
+  

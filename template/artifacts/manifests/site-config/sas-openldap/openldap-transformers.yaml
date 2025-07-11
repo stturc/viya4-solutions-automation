@@ -1,0 +1,71 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: sas-openldap-persistence-transformer
+patch: |-
+  - op: add
+    path: /spec/template/spec/volumes/-
+    value:
+      name: sas-openldap-database
+      persistentVolumeClaim:
+        claimName: sas-openldap-database
+  - op: add
+    path: /spec/template/spec/volumes/-
+    value:
+      name: sas-openldap-config
+      persistentVolumeClaim:
+        claimName: sas-openldap-config
+  - op: add
+    path: /spec/template/spec/volumes/-
+    value:
+      name: sas-openldap-certs
+      secret:
+        secretName: sas-openldap-certs
+        defaultMode: 0400
+        items:
+          - key: ca.crt
+            path: ca.crt
+          - key: tls.crt
+            path: ldap.crt
+          - key: tls.key
+            path: ldap.key
+  - op: add
+    path: /spec/template/spec/containers/0/volumeMounts/-
+    value:
+      name: sas-openldap-database
+      mountPath: /var/lib/ldap
+  - op: add
+    path: /spec/template/spec/containers/0/volumeMounts/-
+    value:
+      name: sas-openldap-config
+      mountPath: /etc/ldap/slapd.d
+  - op: add
+    path: /spec/template/spec/containers/0/volumeMounts/-
+    value:
+      name: sas-openldap-certs
+      mountPath: /container/service/slapd/assets/certs
+  - op: add
+    path: /spec/template/spec/containers/0/ports/-
+    value:
+     containerPort: 636
+target:
+  group: apps
+  kind: Deployment
+  name: openldap
+  version: v1
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: sas-openldap-service-transformer
+patch: |-
+  - op: add
+    path: /spec/ports/1
+    value:
+     name: ldaps
+     port: 636
+     protocol: TCP
+     targetPort: 636
+target:
+  kind: Service
+  name: ldap-svc

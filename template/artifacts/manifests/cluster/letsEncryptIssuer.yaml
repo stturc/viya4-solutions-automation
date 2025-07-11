@@ -1,0 +1,22 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: sas-viya-letsencrypt-issuer
+  namespace: {{V4_CFG_NAMESPACE}}
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: unknown@sas.com
+    privateKeySecretRef:
+      name: sas-viya-letsencrypt-issuer
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+          podTemplate:
+            spec:
+              nodeSelector:
+                "kubernetes.io/os": linux

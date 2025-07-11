@@ -1,0 +1,352 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "aksName": {
+            "type": "string"
+        },
+        "aksManagedResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[concat('MC','_',resourceGroup().name,'_',parameters('aksName'),'_', parameters('location'))]"
+        },
+        "subnetId": {
+            "type": "string"
+        },
+        "kubernetesVersion": {
+            "type": "string"
+        },
+        "nodeTopology": {
+            "type": "string",
+            "defaultValue": "Standard",
+            "allowedValues": [
+                "Standard",
+                "Optimized"
+            ]
+        },
+        "casConfig":{
+            "type": "object"
+        },
+        "computeConfig":{
+            "type": "object"
+        },
+        "statefulConfig":{
+            "type": "object"
+        },
+        "statelessConfig":{
+            "type": "object"
+        },
+        "managementConfig":{
+            "type": "object"
+        },
+        "defaultConfig":{
+            "type": "object"
+        },
+        "backupConfig":{
+            "type": "object"
+        }
+    },
+    "variables": {
+        "aksName": "[parameters('aksName')]",
+        "casConfigDefault": {
+            "name": "cas",
+            "vmSize": "Standard_B1ls",
+            "count": 0,
+            "minCount": 0,
+            "maxCount": 0,
+            "osDiskSizeGB": 10,
+            "osDiskType": "Managed",
+            "kubeletDiskType": "OS",
+            "maxPods": 110,
+            "type": "VirtualMachineScaleSets",
+            "availabilityZones": ["1"],
+            "enableAutoScaling": true,
+            "enableNodePublicIP": false,
+            "nodeLabels": {},
+            "nodeTaints": [],
+            "mode": "User",
+            "enableEncryptionAtHost": false,
+            "osType": "Linux",
+            "osSKU": "Ubuntu",
+            "enableFIPS": false,
+            "vnetSubnetID": "[parameters('subnetId')]",
+            "orchestratorVersion": "[parameters('kubernetesVersion')]"
+        },
+        "computeConfigDefault": {
+            "name": "compute",
+            "vmSize": "Standard_B1ls",
+            "count": 0,
+            "minCount": 0,
+            "maxCount": 0,
+            "osDiskSizeGB": 10,
+            "osDiskType": "Managed",
+            "kubeletDiskType": "OS",
+            "maxPods": 110,
+            "type": "VirtualMachineScaleSets",
+            "availabilityZones": ["1"],
+            "enableAutoScaling": true,
+            "enableNodePublicIP": false,
+            "nodeLabels": {},
+            "nodeTaints": [],
+            "mode": "User",
+            "enableEncryptionAtHost": false,
+            "osType": "Linux",
+            "osSKU": "Ubuntu",
+            "enableFIPS": false,
+            "vnetSubnetID": "[parameters('subnetId')]",
+            "orchestratorVersion": "[parameters('kubernetesVersion')]"
+        },
+        "statefulConfigDefault": {
+            "name": "stateful",
+            "vmSize": "Standard_B1ls",
+            "count": 0,
+            "minCount": 0,
+            "maxCount": 0,
+            "osDiskSizeGB": 10,
+            "osDiskType": "Managed",
+            "kubeletDiskType": "OS",
+            "maxPods": 110,
+            "type": "VirtualMachineScaleSets",
+            "availabilityZones": ["1"],
+            "enableAutoScaling": true,
+            "enableNodePublicIP": false,
+            "nodeLabels": {},
+            "nodeTaints": [],
+            "mode": "User",
+            "enableEncryptionAtHost": false,
+            "osType": "Linux",
+            "osSKU": "Ubuntu",
+            "enableFIPS": false,
+            "vnetSubnetID": "[parameters('subnetId')]",
+            "orchestratorVersion": "[parameters('kubernetesVersion')]"
+        },
+        "statelessConfigDefault": {
+            "name": "stateless",
+            "vmSize": "Standard_B1ls",
+            "count": 0,
+            "minCount": 0,
+            "maxCount": 0,
+            "osDiskSizeGB": 10,
+            "osDiskType": "Managed",
+            "kubeletDiskType": "OS",
+            "maxPods": 110,
+            "type": "VirtualMachineScaleSets",
+            "availabilityZones": ["1"],
+            "enableAutoScaling": true,
+            "enableNodePublicIP": false,
+            "nodeLabels": {},
+            "nodeTaints": [],
+            "mode": "User",
+            "enableEncryptionAtHost": false,
+            "osType": "Linux",
+            "osSKU": "Ubuntu",
+            "enableFIPS": false,
+            "vnetSubnetID": "[parameters('subnetId')]",
+            "orchestratorVersion": "[parameters('kubernetesVersion')]"
+        },
+        "managementConfigDefault": {
+            "name": "management",
+            "vmSize": "Standard_B1ls",
+            "count": 0,
+            "minCount": 0,
+            "maxCount": 0,
+            "osDiskSizeGB": 10,
+            "osDiskType": "Managed",
+            "kubeletDiskType": "OS",
+            "maxPods": 110,
+            "type": "VirtualMachineScaleSets",
+            "availabilityZones": ["1"],
+            "enableAutoScaling": true,
+            "enableNodePublicIP": false,
+            "nodeLabels": {},
+            "nodeTaints": [],
+            "mode": "System",
+            "enableEncryptionAtHost": false,
+            "osType": "Linux",
+            "osSKU": "Ubuntu",
+            "enableFIPS": false,
+            "vnetSubnetID": "[parameters('subnetId')]",
+            "orchestratorVersion": "[parameters('kubernetesVersion')]"
+        },
+        "backupConfigDefault": {
+            "name": "backup",
+            "vmSize": "Standard_B1ls",
+            "count": 0,
+            "minCount": 0,
+            "maxCount": 0,
+            "osDiskSizeGB": 10,
+            "osDiskType": "Managed",
+            "kubeletDiskType": "OS",
+            "maxPods": 110,
+            "type": "VirtualMachineScaleSets",
+            "availabilityZones": ["1"],
+            "enableAutoScaling": true,
+            "enableNodePublicIP": false,
+            "nodeLabels": {},
+            "nodeTaints": [],
+            "mode": "User",
+            "enableEncryptionAtHost": false,
+            "osType": "Linux",
+            "osSKU": "Ubuntu",
+            "enableFIPS": false,
+            "vnetSubnetID": "[parameters('subnetId')]",
+            "orchestratorVersion": "[parameters('kubernetesVersion')]"
+        },
+        "defaultConfigDefault": {
+            "name": "default",
+            "vmSize": "Standard_B1ls",
+            "count": 0,
+            "minCount": 0,
+            "maxCount": 0,
+            "osDiskSizeGB": 10,
+            "osDiskType": "Managed",
+            "kubeletDiskType": "OS",
+            "maxPods": 110,
+            "type": "VirtualMachineScaleSets",
+            "availabilityZones": ["1"],
+            "enableAutoScaling": true,
+            "enableNodePublicIP": false,
+            "nodeLabels": {},
+            "nodeTaints": [],
+            "mode": "User",
+            "enableEncryptionAtHost": false,
+            "osType": "Linux",
+            "osSKU": "Ubuntu",
+            "enableFIPS": false,
+            "vnetSubnetID": "[parameters('subnetId')]",
+            "orchestratorVersion": "[parameters('kubernetesVersion')]"
+        },
+        "casConfig": "[if(empty(parameters('casConfig')), parameters('casConfig'), union(variables('casConfigDefault'),parameters('casConfig')))]",
+        "computeConfig": "[if(empty(parameters('computeConfig')), parameters('computeConfig'), union(variables('computeConfigDefault'),parameters('computeConfig')))]",
+        "statefulConfig": "[if(empty(parameters('statefulConfig')), parameters('statefulConfig'), union(variables('statefulConfigDefault'),parameters('statefulConfig')))]",
+        "statelessConfig": "[if(empty(parameters('statelessConfig')), parameters('statelessConfig'), union(variables('statelessConfigDefault'),parameters('statelessConfig')))]",
+        "managementConfig": "[if(empty(parameters('managementConfig')), parameters('managementConfig'), union(variables('managementConfigDefault'),parameters('managementConfig')))]",
+        "defaultConfig": "[if(empty(parameters('defaultConfig')), parameters('defaultConfig'), union(variables('defaultConfigDefault'),parameters('defaultConfig')))]",
+        "backupConfig": "[if(empty(parameters('backupConfig')), parameters('backupConfig'), union(variables('backupConfigDefault'),parameters('backupConfig')))]",
+        "agentPoolProfiles": {
+            "Standard" : "[concat(array(variables('casConfig')), array(variables('computeConfig')), array(variables('statefulConfig')), array(variables('statelessConfig')), array(variables('managementConfig')), array(variables('defaultConfig')), array(variables('backupConfig')))]",
+            "Optimized" : "[concat(array(variables('casConfig')), array(variables('computeConfig')), array(variables('managementConfig')))]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "apiVersion": "2022-03-01",
+            "name": "[variables('aksName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {},
+            "sku": {
+                "name": "Basic",
+                "tier": "Free"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "kubernetesVersion": "[parameters('kubernetesVersion')]",
+                "dnsPrefix": "[variables('aksName')]",
+                "agentPoolProfiles": "[variables('agentPoolProfiles')[parameters('nodeTopology')]]",
+                "servicePrincipalProfile": {
+                    "clientId": "msi"
+                },
+                "addonProfiles": {
+                    "httpApplicationRouting": {
+                        "enabled": false
+                    },
+                    "kubeDashboard": {
+                        "enabled": false
+                    },
+                    "omsagent": {
+                        "enabled": false
+                    }
+                },
+                "nodeResourceGroup": "[parameters('aksManagedResourceGroupName')]",
+                "enableRBAC": true,
+                "networkProfile": {
+                    "networkPlugin": "kubenet",
+                    "loadBalancerSku": "Standard",
+                    "podCidr": "10.244.0.0/16",
+                    "serviceCidr": "10.0.0.0/16",
+                    "dnsServiceIP": "10.0.0.10",
+                    "dockerBridgeCidr": "172.17.0.1/16",
+                    "outboundType": "loadBalancer"
+                },
+                "apiServerAccessProfile": {
+                    "enablePrivateCluster": false
+                },
+                "autoScalerProfile": {
+                    "balance-similar-node-groups": "false",
+                    "expander": "random",
+                    "max-empty-bulk-delete": "10",
+                    "max-graceful-termination-sec": "600",
+                    "max-node-provision-time": "15m",
+                    "max-total-unready-percentage": "45",
+                    "new-pod-scale-up-delay": "0s",
+                    "ok-total-unready-count": "3",
+                    "scale-down-delay-after-add": "10m",
+                    "scale-down-delay-after-delete": "10s",
+                    "scale-down-delay-after-failure": "3m",
+                    "scale-down-unneeded-time": "10m",
+                    "scale-down-unready-time": "20m",
+                    "scale-down-utilization-threshold": "0.5",
+                    "scan-interval": "10s",
+                    "skip-nodes-with-local-storage": "false",
+                    "skip-nodes-with-system-pods": "true"
+                },
+                "oidcIssuerProfile": {
+                    "enabled": false
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "apiServerFqdn": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksName'))).fqdn]"
+        },
+        "nodeResourceGroup": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksName'))).nodeResourceGroup]"
+        },
+        "nodeTopology": {
+            "type": "string",
+            "value": "[parameters('nodeTopology')]"
+        },
+        "casConfig":{
+            "type": "object",
+            "value": "[variables('casConfig')]"
+        },
+        "computeConfig":{
+            "type": "object",
+            "value": "[variables('computeConfig')]"
+        },
+        "statefulConfig":{
+            "type": "object",
+            "value": "[variables('statefulConfig')]"
+        },
+        "statelessConfig":{
+            "type": "object",
+            "value": "[variables('statelessConfig')]"
+        },
+        "managementConfig":{
+            "type": "object",
+            "value": "[variables('managementConfig')]"
+        },
+        "defaultConfig":{
+            "type": "object",
+            "value": "[variables('defaultConfig')]"
+        },
+        "backupConfig":{
+            "type": "object",
+            "value": "[variables('backupConfig')]"
+        },
+        "agentPoolProfiles": {
+            "type": "array",
+            "value": "[variables('agentPoolProfiles')[parameters('nodeTopology')]]"
+        }
+    }
+}

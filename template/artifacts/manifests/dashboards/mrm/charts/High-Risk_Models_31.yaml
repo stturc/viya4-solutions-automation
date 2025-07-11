@@ -1,0 +1,76 @@
+slice_name: High-Risk Models
+description: null
+certified_by: null
+certification_details: null
+viz_type: gauge_chart
+params:
+  datasource: 14__table
+  viz_type: gauge_chart
+  slice_id: 31
+  groupby: []
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_h2bofjm5qer_4tef9g4pn7u
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _mrm_deployed
+  - clause: WHERE
+    comparator:
+    - mrm_PENDING_RET
+    - mrm_PROD_VAL
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_prmm186gpxm_30f0b6vmyj
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _modelStatus
+  - clause: WHERE
+    comparator:
+    - mrm_RISK_RATING_1
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_x808o7igurc_hkwyoxbi6iv
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _mrm_approvedRiskRating
+  row_limit: 10
+  min_val: 0
+  max_val: 200
+  start_angle: 225
+  end_angle: -45
+  color_scheme: SASColorPalette
+  font_size: 15
+  number_format: SMART_NUMBER
+  value_formatter: '{value}'
+  show_pointer: true
+  animation: true
+  show_axis_tick: false
+  show_split_line: false
+  split_number: 10
+  show_progress: true
+  overlap: true
+  round_cap: false
+  intervals: 5,20,200
+  interval_color_indices: ''
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":14,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_modelStatus","op":"IN","val":["mrm_PENDING_RET","mrm_PROD_VAL"]},{"col":"_mrm_approvedRiskRating","op":"IN","val":["mrm_RISK_RATING_1"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"row_limit":10,"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"14__table","viz_type":"gauge_chart","slice_id":31,"groupby":[],"metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_h2bofjm5qer_4tef9g4pn7u","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_mrm_deployed"},{"clause":"WHERE","comparator":["mrm_PENDING_RET","mrm_PROD_VAL"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_prmm186gpxm_30f0b6vmyj","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_modelStatus"},{"clause":"WHERE","comparator":["mrm_RISK_RATING_1"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_x808o7igurc_hkwyoxbi6iv","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_mrm_approvedRiskRating"}],"row_limit":10,"min_val":0,"max_val":200,"start_angle":225,"end_angle":-45,"color_scheme":"SASColorPalette","font_size":15,"number_format":"SMART_NUMBER","value_formatter":"{value}","show_pointer":true,"animation":true,"show_axis_tick":false,"show_split_line":false,"split_number":10,"show_progress":true,"overlap":true,"round_cap":false,"intervals":"5,20,200","interval_color_indices":"","extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 12b99581-1f67-4192-950a-648aa86a52f6
+version: 1.0.0
+dataset_uuid: d870bb2b-c955-4ece-abf0-0e55ea6f465a

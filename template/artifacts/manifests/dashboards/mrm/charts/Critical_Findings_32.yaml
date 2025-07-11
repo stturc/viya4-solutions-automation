@@ -1,0 +1,72 @@
+slice_name: Critical Findings
+description: null
+certified_by: null
+certification_details: null
+viz_type: gauge_chart
+params:
+  datasource: 13__table
+  viz_type: gauge_chart
+  slice_id: 32
+  groupby: []
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_1h5uled0hd3j_n86dyocg3s
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _closedDttm
+  - clause: WHERE
+    comparator:
+    - CRITICAL
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_b6aj5vhqaxr_aj1bf8vtey
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _severity
+  - clause: WHERE
+    comparator: null
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_r82o6mgo0lg_xlxkjm7wbd8
+    isExtra: false
+    isNew: false
+    operator: IS NOT NULL
+    operatorId: IS_NOT_NULL
+    sqlExpression: null
+    subject: tr_status
+  row_limit: 10
+  min_val: 0
+  max_val: 100
+  start_angle: 225
+  end_angle: -45
+  color_scheme: SASColorPalette
+  font_size: 15
+  number_format: SMART_NUMBER
+  value_formatter: '{value}'
+  show_pointer: true
+  animation: true
+  split_number: 10
+  show_progress: true
+  overlap: true
+  intervals: 5,10,100
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":13,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_closedDttm","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_severity","op":"IN","val":["CRITICAL"]},{"col":"tr_status","op":"IS
+  NOT NULL"}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"row_limit":10,"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"13__table","viz_type":"gauge_chart","slice_id":32,"groupby":[],"metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_1h5uled0hd3j_n86dyocg3s","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_closedDttm"},{"clause":"WHERE","comparator":["CRITICAL"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_b6aj5vhqaxr_aj1bf8vtey","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_severity"},{"clause":"WHERE","comparator":null,"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_r82o6mgo0lg_xlxkjm7wbd8","isExtra":false,"isNew":false,"operator":"IS
+  NOT NULL","operatorId":"IS_NOT_NULL","sqlExpression":null,"subject":"tr_status"}],"row_limit":10,"min_val":0,"max_val":100,"start_angle":225,"end_angle":-45,"color_scheme":"SASColorPalette","font_size":15,"number_format":"SMART_NUMBER","value_formatter":"{value}","show_pointer":true,"animation":true,"split_number":10,"show_progress":true,"overlap":true,"intervals":"5,10,100","extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 665e5d5c-e1c2-40f2-9f36-7bd0ef530bc6
+version: 1.0.0
+dataset_uuid: ced6d181-a505-4481-abb3-d52eb026a6a5

@@ -1,0 +1,172 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Create Storage Account and Container
+run-name: create-storage-account-and-container
+
+on:
+  workflow_call:
+    inputs:
+      storage_account_rg:
+        required: true
+        type: string
+      storage_account_name:
+        required: true
+        type: string
+      storage_account_container_name:
+        required: true
+        type: string
+      location: 
+        required: true
+        type: string
+      environment:
+        type: string
+      artifact_name:
+        description: 'Artifact name to download'
+        required: true
+        type: string
+      artifact_file_name:
+        description: 'Artifact file name to upload'
+        required: true
+        type: string
+    outputs:
+      package_sas_uri: 
+        value: ${{ jobs.create-storage-account-and-container.outputs.package_sas_uri }}
+
+permissions:
+  id-token: write
+  contents: read
+  
+jobs:
+  create-storage-account-and-container:
+    name: create-storage-account-and-container
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    outputs:
+      package_sas_uri: ${{ steps.upload_package.outputs.package_sas_uri }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          
+      - name: Create/Use Resource group for Storage account
+        id: create_storage_rg
+        run: |
+          storage_account_rg="${{ inputs.storage_account_rg }}"
+          location="${{ inputs.location }}"
+          resource_owner="${{ github.actor }}"
+
+          echo "::group::Create/Use Resource group for Storage account"
+          if ! az group show --name "${storage_account_rg}" &>/dev/null; then
+            az group create --name "${storage_account_rg}" --location "${location}" --tags resourceowner="${resource_owner}"
+            echo "Resource group '${storage_account_rg}' created."
+          else
+            echo "Resource group '${storage_account_rg}' already exists."
+          fi
+          echo "::endgroup::"
+
+      - name: Create/Use Storage account and Storage container
+        id: create_storage_account
+        run: |
+          resource_owner="${{ github.actor }}"
+
+          location="${{ inputs.location }}"
+          storage_account_rg="${{ inputs.storage_account_rg }}"
+          storage_account_name="${{ inputs.storage_account_name }}"
+
+          echo "::group::Create/Use Storage account and Storage container"
+          # Check if the storage account exists
+          if [ $(az storage account check-name --name "${storage_account_name}" --query "nameAvailable") == "false" ]; then
+            echo "Storage account '${storage_account_name}' already exists."
+          else
+            echo "Creating storage account '${storage_account_name}'."
+            az storage account create \
+              --name "${storage_account_name}" \
+              --resource-group "${storage_account_rg}" \
+              --location "${location}" \
+              --sku Standard_LRS \
+              --tags resourceowner="${resource_owner}"
+          fi
+          echo "::endgroup::"
+
+      - name: Get Azure Storage Account Key
+        id: get_storage_account_key
+        run: |
+          # Get the storage account key
+          storage_account_name="${{ inputs.storage_account_name }}"
+          storage_account_key=$(az storage account keys list --account-name "${storage_account_name}" --query "[0].value" -o tsv)
+          echo "storage_account_key=$storage_account_key" >> $GITHUB_OUTPUT
+
+      - name: Create/Use Storage container
+        id: create_storage_container
+        run: |
+          # Create/Use Storage container
+          storage_account_rg="${{ inputs.storage_account_rg }}"
+          storage_account_name="${{ inputs.storage_account_name }}"
+          storage_account_key="${{ steps.get_storage_account_key.outputs.storage_account_key }}"
+          storage_account_container_name="${{ inputs.storage_account_container_name }}"
+          
+          echo "::group::Create Storage Account Container"
+          echo "Creating storage account container '${storage_account_container_name}'."
+          az storage container create \
+            --account-name "${storage_account_name}" \
+            --account-key "${storage_account_key}" \
+            --name "${storage_account_container_name}"
+
+          echo "Storage account container '${storage_account_container_name}' created."
+          echo "::endgroup::"
+
+          echo "storage_account_container_name=$storage_account_container_name" >> $GITHUB_OUTPUT
+
+      - name: Download artifact passed from caller
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+
+      - name: Upload package to Azure Storage
+        id: upload_package
+        run: |
+          storage_account_name="${{ inputs.storage_account_name }}"
+          storage_account_container_name="${{ steps.create_storage_container.outputs.storage_account_container_name }}"
+          storage_account_key="${{ steps.get_storage_account_key.outputs.storage_account_key }}"
+          
+          echo "::group::Upload package to Azure Storage"
+          echo "Uploading artifact to storage account container '${STORAGE_ACCOUNT_CONTAINER_NAME}'."
+          # Upload the ZIP file to the storage account container
+          az storage blob upload \
+            --account-name "${storage_account_name}" \
+            --account-key "${storage_account_key}" \
+            --container-name "${storage_account_container_name}" \
+            --name "${{ inputs.artifact_file_name }}" \
+            --file "${{ inputs.artifact_file_name }}" \
+            --overwrite
+
+          expiry_date=$(date -u -d "+3 hours" '+%Y-%m-%dT%H:%MZ')
+
+          package_sas_uri_raw=$(az storage blob generate-sas \
+          --account-name "${storage_account_name}" \
+          --account-key "${storage_account_key}" \
+          --container-name "${storage_account_container_name}" \
+          --name "${{ inputs.artifact_file_name }}" \
+          --permissions r \
+          --expiry "${expiry_date}" \
+          --full-uri \
+          --https-only)
+        
+          package_sas_uri=$(echo $package_sas_uri_raw | sed 's/"//g')
+          echo "package_sas_uri=$package_sas_uri"
+          echo "::endgroup::"
+
+          echo "package_sas_uri=$package_sas_uri" >> $GITHUB_OUTPUT

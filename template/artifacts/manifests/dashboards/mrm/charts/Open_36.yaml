@@ -1,0 +1,50 @@
+slice_name: Open
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 9__table
+  viz_type: big_number_total
+  slice_id: 36
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_42htxaeucn7_gz7lmrqgbk
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _mrm_actualEndDt
+  - clause: WHERE
+    comparator:
+    - mrm_VALIDATION_COMPLETED
+    - 'NULL'
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_18hr3kbt2fti_pvpxm07m2s
+    isExtra: false
+    isNew: false
+    operator: NOT IN
+    operatorId: NOT_IN
+    sqlExpression: null
+    subject: _mrm_reviewStatus
+  header_font_size: 0.6
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  conditional_formatting: []
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":9,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_actualEndDt","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_mrm_reviewStatus","op":"NOT IN","val":["mrm_VALIDATION_COMPLETED","NULL"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"9__table","viz_type":"big_number_total","slice_id":36,"metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_42htxaeucn7_gz7lmrqgbk","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_mrm_actualEndDt"},{"clause":"WHERE","comparator":["mrm_VALIDATION_COMPLETED","NULL"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_18hr3kbt2fti_pvpxm07m2s","isExtra":false,"isNew":false,"operator":"NOT
+  IN","operatorId":"NOT_IN","sqlExpression":null,"subject":"_mrm_reviewStatus"}],"header_font_size":0.6,"subheader_font_size":0.15,"y_axis_format":"SMART_NUMBER","time_format":"smart_date","conditional_formatting":[],"extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: b7c8c64c-7663-4e7e-8290-89f71923864f
+version: 1.0.0
+dataset_uuid: fc4962ad-9158-4b7a-9143-9b2dfbe99695

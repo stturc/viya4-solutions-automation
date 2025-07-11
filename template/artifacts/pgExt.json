@@ -1,0 +1,210 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring"
+        },
+        "vnetName":{
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "administratorLogin": {
+            "type": "string",
+            "defaultValue": "rbi_pgadmin"
+        },
+        "administratorLoginPassword": {
+            "type": "securestring"
+        },
+        "serverName": {
+            "type": "string"
+        },
+        "serverEdition": {
+            "type": "string",
+            "defaultValue": "GeneralPurpose"
+        },
+        "skuSizeGB": {
+            "type": "int",
+            "defaultValue": 128
+        },
+        "dbInstanceType": {
+            "type": "string",
+            "defaultValue": "Standard_D4ds_v4"
+        },
+        "haMode": {
+            "type": "string",
+            "defaultValue": "Disabled"
+        },
+        "availabilityZone": {
+            "type": "string",
+            "defaultValue": "1"
+        },
+        "version": {
+            "type": "string",
+            "defaultValue": "12"
+        },
+        "identityName":{
+            "type": "string"
+        },
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        },
+        "azCliVersion":{
+            "type": "string"
+        },
+        "subnetCIDR":{
+            "type": "string"            
+        }
+    },
+    "variables": {
+        "privateDnsZoneName": "[concat(parameters('vnetName'),'.private.postgres.database.azure.com')]",        
+        "delegatedSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'),'extpg')]",
+        "privateDnsZoneArmResourceId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2023-04-01",
+            "name": "[concat(parameters('vnetName'),'/extpg')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressPrefix": "192.168.3.0/28",
+                "delegations": [
+                    {
+                        "name": "Microsoft.DBforPostgreSQL.flexibleServers",
+                        "properties": {
+                            "serviceName": "Microsoft.DBforPostgreSQL/flexibleServers",
+                            "actions": [
+                                "Microsoft.Network/virtualNetworks/subnets/join/action"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2024-06-01",
+            "name": "[variables('privateDnsZoneName')]",
+            "location": "global",
+            "properties": {}            
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(variables('privateDnsZoneName'), '/vnet-link')]",
+            "location": "global",
+            "dependsOn": [
+                 "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+            ],
+            "properties": {
+                "registrationEnabled": true,
+                "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+            "apiVersion": "2023-03-01-preview",
+            "name": "[parameters('serverName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('delegatedSubnetResourceId')]",
+                "[variables('privateDnsZoneArmResourceId')]"
+            ],
+            "sku": {
+                "name": "[parameters('dbInstanceType')]",
+                "tier": "[parameters('serverEdition')]"
+            },
+            "properties": {
+                "version": "[parameters('version')]",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "network": {
+                    "delegatedSubnetResourceId": "[variables('delegatedSubnetResourceId')]",
+                    "privateDnsZoneArmResourceId": "[variables('privateDnsZoneArmResourceId')]"
+                },
+                "highAvailability": {
+                    "mode": "[parameters('haMode')]"
+                },
+                "backup": {
+                    "backupRetentionDays": 7,
+                    "geoRedundantBackup": "Disabled"
+                },
+                "availabilityZone": "[parameters('availabilityZone')]",
+                "dataEncryption": {
+                    "type": "SystemManaged"
+                },
+                "storage": {
+                    "type": "Premium_LRS",
+                    "storageSizeGB": "[parameters('skuSizeGB')]",
+                    "autoGrow": "Disabled"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[concat('WaitFor',parameters('serverName'))]",
+            "location": "[parameters('location')]",
+            "kind": "AzureCLI",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "[parameters('utcValue')]",
+                "azCliVersion": "[parameters('azCliVersion')]",
+                "environmentVariables": [
+                    {
+                      "name": "PG_RG",
+                      "value": "[resourceGroup().name]"
+                    },
+                    {
+                      "name": "PG_Name",
+                      "secureValue": "[parameters('serverName')]"
+                    },
+                    {
+                      "name": "SUBSCRIPTION_ID",
+                      "secureValue": "[subscription().subscriptionId]"
+                    }
+                ],
+                "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('waitForPG.sh', parameters('_artifactsLocationSasToken')))]",
+                "timeout": "PT2H",
+                "cleanupPreference": "Always",
+                "retentionInterval": "PT2H"
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
+            "apiVersion": "2023-03-01-preview",
+            "name": "[concat(parameters('serverName'), '/azure.extensions')]",
+            "properties": {
+                "value": "ltree",
+                "source": "user-override"
+            },
+            "dependsOn": [
+                "[concat('WaitFor',parameters('serverName'))]"
+            ]
+        }
+    ],
+    "outputs": {
+        "fqdn": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName')), '2023-03-01-preview').fullyQualifiedDomainName]"
+        }
+    }
+}

@@ -1,0 +1,55 @@
+slice_name: Non-validated
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 8__table
+  viz_type: big_number_total
+  metric: count
+  adhoc_filters:
+  - expressionType: SIMPLE
+    subject: _mrm_deployed
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_i9r44tp9xqd_3mdrp1r4zl2
+  - expressionType: SIMPLE
+    subject: _modelStatus
+    operator: NOT IN
+    operatorId: NOT_IN
+    comparator:
+    - mrm_DEPLOY
+    - mrm_DEVELOP
+    - mrm_EDIT
+    - mrm_PEER
+    - mrm_PENDING_RET
+    - mrm_REJECT_DEV
+    - mrm_TRIAGE
+    - mrm_PROD_VAL
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_9v2v6eyor5i_vgdotldpjn
+  header_font_size: 0.6
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  conditional_formatting: []
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":8,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_modelStatus","op":"NOT IN","val":["mrm_DEPLOY","mrm_DEVELOP","mrm_EDIT","mrm_PEER","mrm_PENDING_RET","mrm_REJECT_DEV","mrm_TRIAGE","mrm_PROD_VAL"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"8__table","viz_type":"big_number_total","metric":"count","adhoc_filters":[{"expressionType":"SIMPLE","subject":"_mrm_deployed","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_i9r44tp9xqd_3mdrp1r4zl2"},{"expressionType":"SIMPLE","subject":"_modelStatus","operator":"NOT
+  IN","operatorId":"NOT_IN","comparator":["mrm_DEPLOY","mrm_DEVELOP","mrm_EDIT","mrm_PEER","mrm_PENDING_RET","mrm_REJECT_DEV","mrm_TRIAGE","mrm_PROD_VAL"],"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_9v2v6eyor5i_vgdotldpjn"}],"header_font_size":0.6,"subheader_font_size":0.15,"y_axis_format":"SMART_NUMBER","time_format":"smart_date","conditional_formatting":[],"extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: e2d16e66-cd8b-4ff2-af7a-d98fffab945b
+version: 1.0.0
+dataset_uuid: cdee58a6-ac57-42bc-9492-0f280c3a229f

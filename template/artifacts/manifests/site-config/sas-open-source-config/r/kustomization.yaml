@@ -1,0 +1,8 @@
+configMapGenerator:
+- name: sas-open-source-config-r
+  literals:
+  - DM_RHOME=/opt/sas/viya/home/sas-pyconfig/default_r/lib64/R
+  - R_HOME=/opt/sas/viya/home/sas-pyconfig/default_r/lib64/R
+  - SAS_EXTLANG_SETTINGS=/opt/sas/viya/home/sas-pyconfig/default_r/lib64/R/lib/extlang_python_and_R_for_crush.xml
+  - SAS_EXT_LLP_R=/opt/sas/viya/home/sas-pyconfig/default_r/lib64/R/lib
+  - LD_LIBRARY_PATH=/opt/sas/viya/home/sas-pyconfig/default_r/lib64/R/lib

@@ -1,0 +1,231 @@
+
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "deploymentName": {
+            "type": "string"
+        },
+        "subnetId": {
+            "type": "string"
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.2.0/24"
+        },
+        "aksSubnetPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.0.0/23"
+        },        
+        "viyaSshPublicKey": {
+            "type": "string"
+        },
+        "userSshPublicKey": {
+            "type": "string"
+        },        
+        "vmSku": {
+            "type": "string",
+            "defaultValue": "Standard_D4s_v4"
+        },        
+        "nfsDiskType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS"
+        },
+        "nfsDiskSize": {
+            "type": "int",
+            "defaultValue": 128
+        },
+        "adminUser": {
+            "type": "string"
+        },
+        "customData": {
+            "type": "string",
+            "defaultValue": "[concat('#cloud-config\nsystem_info:\n  default_user:\n    name: ',parameters('adminUser'),'\nbootcmd:\n- while [ `find /dev/disk/azure/scsi1/ -type l | wc -l` -lt 4 ]; do sleep 5; done\npackage_update: true\npackage_upgrade: true\npackages:\n- nfs-kernel-server\nruncmd:\n- retry() { local n=1 max_retries=$1 delay=$2; shift 2; while [ $n -le $max_retries ]; do echo \"Attempt $n\"; \"$@\" && break || { [ $n -lt $max_retries ] && echo \"Command failed. Retrying in $delay seconds...\" && sleep $delay || { echo \"Command failed after $n attempts.\"; return 1; }; }; n=$((n+1)); done; }\n- retry 10 10 apt install rpcbind nfs-server -y\n- mkdir /export\n- chown nobody:nogroup /export -R\n- chmod -R 0777 /export\n- systemctl enable nfs-kernel-server\n- systemctl start nfs-kernel-server\n- systemctl enable rpc-statd\n- systemctl start rpc-statd\n- pvcreate $(find /dev/disk/azure/scsi1/ -type l | xargs)\n- vgcreate data-vg01 $(find /dev/disk/azure/scsi1/ -type l | xargs)\n- lvcreate --type raid5 --extents 100%FREE --stripes 3 --name data-lv01 data-vg01\n- mkfs -t ext4 /dev/data-vg01/data-lv01\n- echo \"/dev/data-vg01/data-lv01       /export        ext4        defaults,nofail,x-systemd.requires=cloud-init.service,barrier=0,discard        0  2\" >>/etc/fstab\n- mount -a\n- echo \"/export         ',parameters('aksSubnetPrefix'),'(rw,no_root_squash,async,insecure,fsid=0,crossmnt,no_subtree_check)\" >> /etc/exports\n- echo \"/export         ',parameters('subnetPrefix'),'(rw,no_root_squash,async,insecure,fsid=0,crossmnt,no_subtree_check)\" >> /etc/exports\n- exportfs -a\n- systemctl restart nfs-kernel-server')]"
+        }
+    },
+    "variables": {
+        "vmName": "[concat(parameters('deploymentName'),'-nfs-vm')]",
+        "imageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-server-focal",
+            "sku": "20_04-lts",
+            "version": "latest"
+        },
+        "nicName": "[concat(parameters('deploymentName'), '-nfs-nic')]",
+        "osDiskName": "[concat(parameters('deploymentName'), '-nfs-osdisk')]",
+        "dataDiskBaseName": "[concat(parameters('deploymentName'),'-nfs-disk')]",
+        "osDiskSize": 64,
+        "osDiskType": "Standard_LRS",
+        "subnetId": "[parameters('subnetId')]",
+        "viyaSshPublicKey": {
+            "path": "[concat('/home/', parameters('adminUser'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('viyaSshPublicKey')]"
+        },
+        "userSshPublicKey": {
+            "path": "[concat('/home/', parameters('adminUser'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('userSshPublicKey')]"
+        },
+        "customDataBase64": "[base64(parameters('customData'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('nicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-11-01",
+            "name": "[variables('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "tags": {},
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSku')]"
+                },
+                "additionalCapabilities": {
+                    "ultraSSDEnabled": false
+                },
+                "storageProfile": {
+                    "imageReference": "[variables('imageReference')]",
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[variables('osDiskName')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadOnly",
+                        "writeAcceleratorEnabled": false,
+                        "managedDisk": {
+                            "storageAccountType": "[variables('osDiskType')]"
+                        },
+                        "deleteOption": "Detach",
+                        "diskSizeGB": "[variables('osDiskSize')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 10,
+                            "name": "[concat(variables('dataDiskBaseName'),'01')]",
+                            "createOption": "Empty",
+                            "caching": "ReadWrite",
+                            "writeAcceleratorEnabled": false,
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('nfsDiskType')]"
+                            },
+                            "deleteOption": "Detach",
+                            "diskSizeGB": "[parameters('nfsDiskSize')]"
+                        },
+                        {
+                            "lun": 11,
+                            "name": "[concat(variables('dataDiskBaseName'),'02')]",
+                            "createOption": "Empty",
+                            "caching": "ReadWrite",
+                            "writeAcceleratorEnabled": false,
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('nfsDiskType')]"
+                            },
+                            "deleteOption": "Detach",
+                            "diskSizeGB": "[parameters('nfsDiskSize')]"
+                        },
+                        {
+                            "lun": 12,
+                            "name": "[concat(variables('dataDiskBaseName'),'03')]",
+                            "createOption": "Empty",
+                            "caching": "ReadWrite",
+                            "writeAcceleratorEnabled": false,
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('nfsDiskType')]"
+                            },
+                            "deleteOption": "Detach",
+                            "diskSizeGB": "[parameters('nfsDiskSize')]"
+                        },
+                        {
+                            "lun": 13,
+                            "name": "[concat(variables('dataDiskBaseName'),'04')]",
+                            "createOption": "Empty",
+                            "caching": "ReadWrite",
+                            "writeAcceleratorEnabled": false,
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('nfsDiskType')]"
+                            },
+                            "deleteOption": "Detach",
+                            "diskSizeGB": "[parameters('nfsDiskSize')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUser')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                "[variables('viyaSshPublicKey')]",
+                                "[variables('userSshPublicKey')]"
+                            ]
+                        },
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "customData": "[variables('customDataBase64')]",
+                    "allowExtensionOperations": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false
+                    }
+                },
+                "priority": "Regular",
+                "extensionsTimeBudget": "PT1H30M"
+            }
+        }
+    ],
+    "outputs": {
+        "privateIp": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))).ipConfigurations[0].properties.privateIPAddress]"
+        }
+    }
+}
+

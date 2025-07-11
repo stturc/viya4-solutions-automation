@@ -1,0 +1,94 @@
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata: 
+  name: openldap-ppolicy
+patch: |-
+  - op: add
+    path: /data/LDAP_LOAD_POLICY_MODULE
+    value: |-
+      dn: cn=module{0},cn=config
+      changetype: modify
+      add: olcModuleLoad
+      olcModuleLoad: ppolicy
+  - op: add
+    path: /data/LDAP_LOAD_POLICY_OU_CONTAINER
+    value: |-
+      dn: ou=policies,dc=example,dc=com
+      changetype: add
+      objectClass: organizationalUnit
+      objectClass: top
+      ou: policies
+  - op: add
+    path: /data/LDAP_ADD_PPOLICY_IN_LDAP_DATABASE
+    value: |-
+      dn: olcOverlay=ppolicy,olcDatabase={1}mdb,cn=config
+      objectClass: olcOverlayConfig
+      objectClass: olcPPolicyConfig
+      olcOverlay: ppolicy
+      olcPPolicyDefault: cn=default,ou=policies,dc=example,dc=com
+      olcPPolicyUseLockout: TRUE
+  - op: add
+    path: /data/LDAP_CREATE_PASSWORD_POLICY
+    value: |-
+      dn: cn=default,ou=policies,dc=example,dc=com
+      objectClass: inetOrgPerson
+      objectclass: extensibleObject
+      objectClass: pwdPolicyChecker
+      objectClass: pwdPolicy
+      cn: policies
+      sn: policies
+      pwdAllowUserChange: TRUE
+      pwdAttribute: userPassword
+      pwdCheckQuality: 2
+      pwdExpireWarning: 600
+      pwdFailureCountInterval: 30
+      pwdGraceAuthNLimit: 5
+      pwdInHistory: 2
+      pwdLockout: TRUE
+      pwdLockoutDuration: 900
+      pwdMaxAge: 0
+      pwdMaxFailure: 5
+      pwdMinAge: 0
+      pwdMinLength: 5
+      pwdMustChange: FALSE
+      pwdSafeModify: FALSE
+target:
+  kind: ConfigMap
+  name: openldap-bootstrap-config
+  version: v1
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: openldap-add-configmapkeys
+patch: |-
+  - op: add
+    path: /spec/template/spec/volumes/1/configMap/items/-
+    value: 
+      key: LDAP_LOAD_POLICY_MODULE
+      mode: 436
+      path: 08-ppolicy-module.ldif
+  - op: add
+    path: /spec/template/spec/volumes/1/configMap/items/-
+    value:
+      key: LDAP_LOAD_POLICY_OU_CONTAINER
+      mode: 436
+      path: 09-pppolicy-ou.ldif
+  - op: add
+    path: /spec/template/spec/volumes/1/configMap/items/-
+    value:
+      key: LDAP_ADD_PPOLICY_IN_LDAP_DATABASE
+      mode: 436
+      path: 10-ppolicyoverlay.ldif
+  - op: add
+    path: /spec/template/spec/volumes/1/configMap/items/-
+    value:
+      key: LDAP_CREATE_PASSWORD_POLICY
+      mode: 436
+      path: 11-ldap-ppolicies.ldif
+target:
+  kind: Deployment
+  name: openldap
+  version: v1
+

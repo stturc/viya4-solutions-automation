@@ -1,0 +1,78 @@
+slice_name: ' '
+description: null
+certified_by: null
+certification_details: null
+viz_type: table
+params:
+  datasource: 8__table
+  viz_type: table
+  slice_id: 44
+  query_mode: aggregate
+  groupby:
+  - objectId
+  - name
+  - tr_modelStatus
+  - tr_mrm_approvedRiskRating
+  - _mrm_isML
+  - tr_mrm_performanceRating
+  - _mrm_hasOverlay
+  - _mrm_isUsedBeforeVal
+  - _mrm_performanceRating
+  time_grain_sqla: P1D
+  temporal_columns_lookup:
+    _mrm_lastUsed: true
+    _mrm_latestModelMonitoring: true
+    _mrm_materialityAssessmentDt: true
+    _mrm_overlayApplied: true
+    _mrm_overlayValidTo: true
+    _mrm_reinstatedOn: true
+    _mrm_retiredOn: true
+    _mrm_startPolicyException: true
+    _mrm_deployed: true
+    _mrm_enteredInventory: true
+    creationTimeStamp: true
+    modifiedTimeStamp: true
+  all_columns: []
+  percent_metrics: []
+  adhoc_filters:
+  - expressionType: SIMPLE
+    subject: _mrm_deployed
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_s4em1d4qlh_w3hd1wypz3l
+  - expressionType: SIMPLE
+    subject: tr_modelStatus
+    operator: IN
+    operatorId: IN
+    comparator:
+    - In production (validated model)
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_o7g8myl2nh_is0mvunfwmi
+  order_by_cols: []
+  row_limit: 1000
+  server_page_length: 10
+  order_desc: true
+  table_timestamp_format: smart_date
+  show_cell_bars: true
+  color_pn: true
+  conditional_formatting: []
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":8,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"tr_modelStatus","op":"IN","val":["In production (validated model)"]}],"extras":{"time_grain_sqla":"P1D","having":"","where":""},"applied_time_extras":{},"columns":["objectId","name","tr_modelStatus","tr_mrm_approvedRiskRating","_mrm_isML","tr_mrm_performanceRating","_mrm_hasOverlay","_mrm_isUsedBeforeVal","_mrm_performanceRating"],"metrics":[],"orderby":[],"annotation_layers":[],"row_limit":1000,"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{},"post_processing":[]}],"form_data":{"datasource":"8__table","viz_type":"table","slice_id":44,"query_mode":"aggregate","groupby":["objectId","name","tr_modelStatus","tr_mrm_approvedRiskRating","_mrm_isML","tr_mrm_performanceRating","_mrm_hasOverlay","_mrm_isUsedBeforeVal","_mrm_performanceRating"],"time_grain_sqla":"P1D","temporal_columns_lookup":{"_mrm_lastUsed":true,"_mrm_latestModelMonitoring":true,"_mrm_materialityAssessmentDt":true,"_mrm_overlayApplied":true,"_mrm_overlayValidTo":true,"_mrm_reinstatedOn":true,"_mrm_retiredOn":true,"_mrm_startPolicyException":true,"_mrm_deployed":true,"_mrm_enteredInventory":true,"creationTimeStamp":true,"modifiedTimeStamp":true},"all_columns":[],"percent_metrics":[],"adhoc_filters":[{"expressionType":"SIMPLE","subject":"_mrm_deployed","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_s4em1d4qlh_w3hd1wypz3l"},{"expressionType":"SIMPLE","subject":"tr_modelStatus","operator":"IN","operatorId":"IN","comparator":["In
+  production (validated model)"],"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_o7g8myl2nh_is0mvunfwmi"}],"order_by_cols":[],"row_limit":1000,"server_page_length":10,"order_desc":true,"table_timestamp_format":"smart_date","show_cell_bars":true,"color_pn":true,"conditional_formatting":[],"extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: ef875480-860b-4a7b-bcd0-185ce30a5fa2
+version: 1.0.0
+dataset_uuid: cdee58a6-ac57-42bc-9492-0f280c3a229f

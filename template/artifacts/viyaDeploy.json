@@ -1,0 +1,296 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring"
+        },
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        },        
+        "deploymentName": {
+            "type": "string"
+        },
+        "azCliVersion": {
+            "type": "string"
+        },
+        "identityName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "rg": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]"
+        },
+        "aksName": {
+            "type": "string"
+        },
+        "kubernetesVersion": {
+            "type": "string"
+        },
+        "v4CfgV4dVersion": {
+            "type": "string"
+        },
+        "v4CfgNamespace": {
+            "type": "string"
+        },
+        "v4CfgRwxFilestorePath": {
+            "type": "string"
+        },
+        "v4CfgIngressDnsPrefix": {
+            "type": "string"
+        },
+        "v4CfgIngressFqdn": {
+            "type": "string"
+        },
+        "v4CfgLoadBalancerSourceRanges": {
+            "type": "string"
+        },
+        "nfsDeploymentName": {
+            "type": "string"
+        },
+        "nfsVmAdminUser": {
+            "type": "string"
+        },
+        "storageAccountName": {
+            "type": "string"
+        },
+        "storageAccountContainerName": {
+            "type": "string"
+        },
+        "viyaAdminPassword": {
+            "type": "securestring"
+        },
+        "jumpDeploymentName":{
+            "type": "string"
+        },
+        "deployScriptContainerCleanupPreference": {
+            "type": "string"
+        },
+        "stepInstallSupersetFlag": {
+            "type": "string"
+        },
+        "stepUpdateSpecCirrusDeploymentsFlag": {
+            "type": "string"
+        },
+        "stepUpdateSpecCASDeploymentsFlag": {
+            "type": "string"
+        },
+        "stepWaitForCirrusDeploymentsFlag": {
+            "type": "string"
+        },
+        "stepAddUsers": {
+            "type": "string"
+        },
+        "stepDisableCASFlag": {
+            "type": "string"
+        },
+        "stepDisableNonEssentialAppsRunTimeFlag": {
+            "type": "string"
+        },
+        "extPgConfigB64":{
+            "type": "string"
+        },
+        "tlsCertB64": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tlsKeyB64": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tlsTrustedCaCertsB64": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "viyaOrderSASURI": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "isUpdate": {
+            "type": "bool",
+            "defaultValue": false
+        }
+    },
+    "variables": {
+        "viyaDeployScriptName": "[concat(parameters('deploymentName'),'-ds-viya-deploy')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('viyaDeployScriptName')]",
+            "location": "[parameters('location')]",
+            "kind": "AzureCLI",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "[parameters('utcValue')]",
+                "azCliVersion": "[parameters('azCliVersion')]",
+                "arguments": "",
+                "environmentVariables": [
+                    {
+                        "name": "SUBSCRIPTION_ID",
+                        "value": "[subscription().subscriptionId]"
+                    },                    
+                    {
+                        "name": "VIYA_ADMIN_PASSWORD",
+                        "secureValue": "[parameters('viyaAdminPassword')]"
+                    },
+                    {
+                        "name": "LOCATION",
+                        "value": "[parameters('location')]"
+                    },
+                    {
+                        "name": "RG",
+                        "value": "[parameters('rg')]"
+                    },
+                    {
+                        "name": "DEPLOYMENTNAME",
+                        "value": "[parameters('deploymentName')]"
+                    },
+                    {
+                        "name": "AKS",
+                        "value": "[parameters('aksName')]"
+                    },
+                    {
+                        "name": "K8S_VERSION",
+                        "value": "[parameters('kubernetesVersion')]"
+                    },
+                    {
+                        "name": "V4_CFG_V4D_VERSION",
+                        "value": "[parameters('v4CfgV4dVersion')]"
+                    },
+                    {
+                        "name": "V4_CFG_NAMESPACE",
+                        "value": "[parameters('v4CfgNamespace')]"
+                    },
+                    {
+                        "name": "V4_CFG_RWX_FILESTORE_PATH",
+                        "value": "[parameters('v4CfgRwxFilestorePath')]"
+                    },
+                    {
+                        "name": "V4_CFG_INGRESS_DNS_PREFIX",
+                        "value": "[parameters('v4CfgIngressDnsPrefix')]"
+                    },
+                    {
+                        "name": "V4_CFG_INGRESS_FQDN",
+                        "value": "[parameters('v4CfgIngressFqdn')]"
+                    },
+                    {
+                        "name": "V4_CFG_LOADBALANCER_SOURCE_RANGES",
+                        "value": "[parameters('v4CfgLoadBalancerSourceRanges')]"
+                    },
+                    {
+                        "name": "NFS_DEPLOYMENT_NAME",
+                        "value": "[parameters('nfsDeploymentName')]"
+                    },
+                    {
+                        "name": "NFS_VM_ADMIN_USER",
+                        "value": "[parameters('nfsVmAdminUser')]"
+                    },
+                    
+                    {
+                        "name": "STORAGE_ACCOUNT",
+                        "value": "[parameters('storageAccountName')]"
+                    },
+                    {
+                        "name": "STORAGE_ACCOUNT_CONTAINER",
+                        "value": "[parameters('storageAccountContainerName')]"
+                    },
+                    {
+                        "name": "JUMP_DEPLOYMENT_NAME",
+                        "value": "[parameters('jumpDeploymentName')]"
+                    },
+                    {
+                        "name": "STEP_INSTALL_SUPERSET_FLAG",
+                        "value": "[parameters('stepInstallSupersetFlag')]"
+                    },
+                    {
+                        "name": "STEP_UPDATE_SPEC_CIRRUS_FLAG",
+                        "value": "[parameters('stepUpdateSpecCirrusDeploymentsFlag')]"
+                    },
+                    {
+                        "name": "STEP_UPDATE_SPEC_CAS_FLAG",
+                        "value": "[parameters('stepUpdateSpecCASDeploymentsFlag')]"
+                    },
+                    {
+                        "name": "STEP_WAIT_FOR_CIRRUS_FLAG",
+                        "value": "[parameters('stepWaitForCirrusDeploymentsFlag')]"
+                    },
+                    {
+                        "name": "STEP_ADD_USERS",
+                        "value": "[parameters('stepAddUsers')]"
+                    },
+                    {
+                        "name": "STEP_DISABLE_CAS_FLAG",
+                        "value": "[parameters('stepDisableCASFlag')]"
+                    },
+                    {
+                        "name": "STEP_DISABLE_NONESSENTIAL_APPS_RUN_TIME_FLAG",
+                        "value": "[parameters('stepDisableNonEssentialAppsRunTimeFlag')]"
+                    },                    
+                    {
+                        "name": "EXTPG_CONFIG_B64",
+                        "value": "[parameters('extPgConfigB64')]"
+                    },
+                    {
+                        "name": "TLS_CERT_B64",
+                        "value": "[parameters('tlsCertB64')]"
+                    },
+                    {
+                        "name": "TLS_KEY_B64",
+                        "value": "[parameters('tlsKeyB64')]"
+                    },
+                    {
+                        "name": "TLS_TRUSTED_CA_CERTS_B64",
+                        "value": "[parameters('tlsTrustedCaCertsB64')]"
+                    },
+                    {
+                        "name": "VIYA_ORDER_SAS_URI",
+                        "value": "[parameters('viyaOrderSASURI')]"
+                    },
+                    {
+                        "name": "IS_UPDATE",
+                        "value": "[parameters('isUpdate')]"
+                    }
+                ],
+                "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('viyaDeploy.sh', parameters('_artifactsLocationSasToken')))]",
+                "timeout": "PT2H",
+                "cleanupPreference": "[parameters('deployScriptContainerCleanupPreference')]",
+                "retentionInterval": "P1D",
+                "supportingScriptUris": [
+                    "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaManifests.zip', parameters('_artifactsLocationSasToken')))]"
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "v4CasIp": {
+            "type": "string",
+            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4CasIp]"
+        },
+        "v4CaCertificateBase64": {
+            "type": "string",
+            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4CaCertificateBase64]"
+        },
+        "v4CfgCadence": {
+            "type": "string",
+            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4CfgCadence]"
+        },
+        "v4IngressIp": {
+            "type": "string",
+            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4IngressIp]"
+        }
+    }
+}

@@ -1,0 +1,87 @@
+slice_name: Business Line by Materiality Assessment
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  datasource: 14__table
+  viz_type: echarts_timeseries_bar
+  slice_id: 42
+  x_axis: tr_mrm_business_lines_3
+  time_grain_sqla: P1D
+  x_axis_sort_asc: true
+  x_axis_sort_series: name
+  x_axis_sort_series_ascending: true
+  metrics:
+  - count
+  groupby:
+  - tr_mrm_materialityAssessment
+  adhoc_filters:
+  - expressionType: SIMPLE
+    subject: _mrm_deployed
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_ac8840yx72c_ma5quus3qtb
+  - expressionType: SIMPLE
+    subject: tr_mrm_business_lines_3
+    operator: IS NOT NULL
+    operatorId: IS_NOT_NULL
+    comparator: null
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_gez0xppepc6_t6o88wys1b
+  order_desc: true
+  row_limit: 10000
+  truncate_metric: false
+  show_empty_columns: true
+  comparison_type: values
+  annotation_layers: []
+  forecastPeriods: 10
+  forecastInterval: 0.8
+  orientation: horizontal
+  x_axis_title: ''
+  x_axis_title_margin: 15
+  y_axis_title: Model Count
+  y_axis_title_margin: 15
+  y_axis_title_position: Left
+  sort_series_type: max
+  color_scheme: SASColorPalette
+  show_value: false
+  stack: Stack
+  only_total: true
+  zoomable: false
+  show_legend: false
+  legendType: scroll
+  legendOrientation: top
+  legendMargin: null
+  x_axis_time_format: smart_date
+  xAxisLabelRotation: 0
+  y_axis_format: SMART_NUMBER
+  logAxis: false
+  minorSplitLine: false
+  truncateYAxis: false
+  y_axis_bounds:
+  - null
+  - null
+  rich_tooltip: true
+  tooltipTimeFormat: smart_date
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":14,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"tr_mrm_business_lines_3","op":"IS NOT NULL"}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[{"timeGrain":"P1D","columnType":"BASE_AXIS","sqlExpression":"tr_mrm_business_lines_3","label":"tr_mrm_business_lines_3","expressionType":"SQL"},"tr_mrm_materialityAssessment"],"metrics":["count"],"orderby":[["count",false]],"annotation_layers":[],"row_limit":10000,"series_columns":["tr_mrm_materialityAssessment"],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{},"time_offsets":[],"post_processing":[{"operation":"pivot","options":{"index":["tr_mrm_business_lines_3"],"columns":["tr_mrm_materialityAssessment"],"aggregates":{"count":{"operator":"mean"}},"drop_missing_columns":false}},{"operation":"flatten"}]}],"form_data":{"datasource":"14__table","viz_type":"echarts_timeseries_bar","slice_id":42,"x_axis":"tr_mrm_business_lines_3","time_grain_sqla":"P1D","x_axis_sort_asc":true,"x_axis_sort_series":"name","x_axis_sort_series_ascending":true,"metrics":["count"],"groupby":["tr_mrm_materialityAssessment"],"adhoc_filters":[{"expressionType":"SIMPLE","subject":"_mrm_deployed","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_ac8840yx72c_ma5quus3qtb"},{"expressionType":"SIMPLE","subject":"tr_mrm_business_lines_3","operator":"IS
+  NOT NULL","operatorId":"IS_NOT_NULL","comparator":null,"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_gez0xppepc6_t6o88wys1b"}],"order_desc":true,"row_limit":10000,"truncate_metric":false,"show_empty_columns":true,"comparison_type":"values","annotation_layers":[],"forecastPeriods":10,"forecastInterval":0.8,"orientation":"horizontal","x_axis_title":"","x_axis_title_margin":15,"y_axis_title":"Model
+  Count","y_axis_title_margin":15,"y_axis_title_position":"Left","sort_series_type":"max","color_scheme":"SASColorPalette","show_value":false,"stack":"Stack","only_total":true,"zoomable":false,"show_legend":false,"legendType":"scroll","legendOrientation":"top","legendMargin":null,"x_axis_time_format":"smart_date","xAxisLabelRotation":0,"y_axis_format":"SMART_NUMBER","logAxis":false,"minorSplitLine":false,"truncateYAxis":false,"y_axis_bounds":[null,null],"rich_tooltip":true,"tooltipTimeFormat":"smart_date","extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 40d6a292-16c9-43eb-a307-a14074ee09f8
+version: 1.0.0
+dataset_uuid: d870bb2b-c955-4ece-abf0-0e55ea6f465a

@@ -1,0 +1,144 @@
+
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "deploymentName": {
+            "type": "string"
+        },
+        "vnetName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('deploymentName'), '-vnet')]"
+        },
+        "aksSubnetName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('deploymentName'), '-aks-subnet')]"
+        },
+        "miscSubnetName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('deploymentName'),'-misc-subnet')]"
+        },
+        "deploymentScriptSubnetName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('deploymentName'),'-ds-subnet')]"
+        },
+        "vnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.0.0/16"
+        },
+        "aksSubnetPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.0.0/23"
+        },
+        "miscSubnetPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.2.0/24"
+        },
+        "deploymentScriptSubnetPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.4.0/24"
+        },
+        "virtualNetworkNewOrExisting": {
+            "type": "string",
+            "metadata": {
+                "description": "Boolean indicating whether the VNet is new or existing (to support BYON in Marketplace)"
+            },
+            "allowedValues": [ "new", "existing" ],
+            "defaultValue": "new"
+        }
+    },
+    "variables": {
+        "vnetId": {
+            "new": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]"
+        },
+        "aksSubnetId": "[concat(variables('vnetId')[parameters('virtualNetworkNewOrExisting')],'/subnets/',parameters('aksSubnetName'))]",
+        "miscSubnetId": "[concat(variables('vnetId')[parameters('virtualNetworkNewOrExisting')],'/subnets/',parameters('miscSubnetName'))]",
+        "deploymentScriptSubnetId": "[concat(variables('vnetId')[parameters('virtualNetworkNewOrExisting')],'/subnets/',parameters('deploymentScriptSubnetName'))]"
+    },
+    "resources": [
+        {
+
+            "condition": "[equals(parameters('virtualNetworkNewOrExisting'),'new')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('vnetName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('miscSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('miscSubnetPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('deploymentScriptSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('deploymentScriptSubnetPrefix')]",
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "delegations": [
+                                {
+                                    "name": "aciDelegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.ContainerInstance/containerGroups"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('aksSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('aksSubnetPrefix')]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Sql",
+                                    "locations": [
+                                        "[parameters('location')]"
+                                    ]
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "vnetId": {
+            "type": "string",
+            "value": "[variables('vnetId')[parameters('virtualNetworkNewOrExisting')]]"
+        },
+        "aksSubnetId": {
+            "type": "string",
+            "value": "[variables('aksSubnetId')]"
+        },
+        "miscSubnetId": {
+            "type": "string",
+            "value": "[variables('miscSubnetId')]"
+        },
+        "deploymentScriptSubnetId": {
+            "type": "string",
+            "value": "[variables('deploymentScriptSubnetId')]"
+        },
+        "rg": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        }
+    }
+
+}

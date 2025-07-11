@@ -1,0 +1,201 @@
+
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "deploymentName": {
+            "type": "string"
+        },
+        "subnetId": {
+            "type": "string"
+        },
+        "userSshPublicKey": {
+            "type": "string"
+        },
+        "vmSku": {
+            "type": "string",
+            "defaultValue": "Standard_B2s"
+        },
+        "adminUser": {
+            "type": "string"
+        },
+        "rwxFilestoreEndpoint": {
+            "type": "string"
+        },
+        "rwxFilestorePath": {
+            "type": "string"
+        },
+        "rwxViyaPath": {
+            "type": "string"
+        },        
+        "jumpFilestorePath": {
+            "type": "string",
+            "defaultValue": "/viya-share"
+        },        
+        "customData": {
+            "type": "string",
+            "defaultValue": "[concat('#cloud-config\nsystem_info:\n  default_user:\n    name: ',parameters('adminUser'),'\npackage_update: true\npackage_upgrade: true\napt:\n  sources:\n    docker.list:\n      source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable\n      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88\npackages:\n- nfs-common\n- acl\n- jq\n- docker-ce\n- docker-ce-cli\nmounts:\n- [ \"',parameters('rwxFilestoreEndpoint'),':',parameters('rwxFilestorePath'),'\",\"',parameters('jumpFilestorePath'),'\",\"nfs\",\"_netdev,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14,x-systemd.idle-timeout=1min,relatime,hard,rsize=1048576,wsize=1048576,vers=3,tcp,namlen=255,retrans=2,sec=sys,local_lock=none\",\"0\",\"0\" ]\nruncmd:\n- while [ `df -h | grep \"',parameters('rwxFilestoreEndpoint'),':',parameters('rwxFilestorePath'),'\" | wc -l` -eq 0 ]; do sleep 5 && mount -a ; done\n- mkdir -p ',parameters('jumpFilestorePath'),'/pvs ',parameters('jumpFilestorePath'),'/',parameters('rwxViyaPath'),'/bin ',parameters('jumpFilestorePath'),'/',parameters('rwxViyaPath'),'/homes ',parameters('jumpFilestorePath'),'/access-clients/postgres ',parameters('jumpFilestorePath'),'/access-clients/AccessKeys ',parameters('jumpFilestorePath'),'/access-clients/AccessKeys/cas ',parameters('jumpFilestorePath'),'/access-clients/AccessKeys/spre ',parameters('jumpFilestorePath'),'/access-clients/odbc ',parameters('jumpFilestorePath'),'/access-clients/jdbc ',parameters('jumpFilestorePath'),'/access-clients/teradata ',parameters('jumpFilestorePath'),'/access-clients/oracle ',parameters('jumpFilestorePath'),'/access-clients/hadoop/jars ',parameters('jumpFilestorePath'),'/access-clients/hadoop/config ',parameters('jumpFilestorePath'),'/',parameters('rwxViyaPath'),'/data ',parameters('jumpFilestorePath'),'/R-config ',parameters('jumpFilestorePath'),'/',parameters('rwxViyaPath'),'/astores\n- $(chmod -fR 777 ',parameters('jumpFilestorePath'),' ; echo)\n- $(chown -R nobody:nogroup ',parameters('jumpFilestorePath'),' ; echo)\n- setfacl -m d:u::rwx,d:g::---,d:o::--- ',parameters('jumpFilestorePath'),'/',parameters('rwxViyaPath'),'/homes\n- usermod -aG docker ',parameters('adminUser'))]"
+        }
+    },
+    "variables": {
+        "vmName": "[concat(parameters('deploymentName'),'-jump-vm')]",
+        "nicName": "[concat(parameters('deploymentName'),'-jump-nic')]",
+        "publicIpName": "[concat(parameters('deploymentName'),'-jump-public_ip')]",
+        "osDiskName": "[concat(parameters('deploymentName'),'-jump-osdisk')]",
+        "osDiskSize": 64,
+        "osDiskType": "Standard_LRS",
+        "subnetId": "[parameters('subnetId')]",
+        "customDataBase64": "[base64(parameters('customData'))]",
+        "osImageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-server-focal",
+            "sku": "20_04-lts",
+            "version": "latest"
+        },
+        "userSshPublicKey": {
+            "path": "[concat('/home/', parameters('adminUser'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('userSshPublicKey')]"
+        }        
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('publicIpName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+            },
+            "sku": {
+                "name": "Basic",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            }
+        },
+
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('nicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+            ],
+            "tags": {
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false
+
+            }
+        },
+
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-11-01",
+            "name": "[variables('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            ],
+            "tags": {
+
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSku')]"
+                },
+                "additionalCapabilities": {
+                    "ultraSSDEnabled": false
+                },
+                "storageProfile": {
+                    "imageReference": "[variables('osImageReference')]",
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[variables('osDiskName')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadOnly",
+                        "writeAcceleratorEnabled": false,
+                        "managedDisk": {
+                            "storageAccountType": "[variables('osDiskType')]"
+
+                        },
+                        "deleteOption": "Detach",
+                        "diskSizeGB": "[variables('osDiskSize')]"
+                    }
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUser')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                "[variables('userSshPublicKey')]"
+                            ]
+                        },
+
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "allowExtensionOperations": true,
+                    "customData": "[variables('customDataBase64')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false
+                    }
+                },
+                "priority": "Regular",
+                "extensionsTimeBudget": "PT1H30M"
+            }
+        }
+    ],
+    "outputs": {
+        "privateIp": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))).ipConfigurations[0].properties.privateIPAddress]"
+        },
+        "publicIp": {
+            "type": "string",
+            "value": "[reference(variables('publicIpName')).ipAddress]"
+        }
+
+    }
+}

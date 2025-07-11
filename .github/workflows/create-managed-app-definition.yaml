@@ -1,0 +1,115 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Create Managed Application Definition
+run-name: create-managed-app-definition
+
+on:
+  workflow_call:
+    inputs:
+      mapp_rg_name:
+        required: true
+        type: string
+      mapp_def_name:
+        required: true
+        type: string
+      location: 
+        required: true
+        type: string        
+      environment: 
+        type: string
+        required: true
+      package_sas_uri: 
+        required: true
+        type: string
+      azure_admin_group_name:
+        description: 'Azure AD Group Name for Managed Application Definition'
+        required: false
+        type: string
+      azure_admin_group_role:
+        description: 'Azure AD Group Role for Managed Application Definition'
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+  
+jobs:
+  create-managed-app-definition:
+    name: deployment
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    env:
+      azure_admin_group_name: ${{ inputs.azure_admin_group_name || secrets.AZURE_ADMIN_GROUP_NAME }}
+      azure_admin_group_role: ${{ inputs.azure_admin_group_role || secrets.AZURE_ADMIN_GROUP_ROLE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create/Use Resource group for Managed Application
+        id: create_mapp_rg
+        run: |
+          location="${{ inputs.location }}"
+          resource_owner="${{ github.actor }}"
+          mapp_rg="${{ inputs.mapp_rg_name }}"
+
+          echo "::group::Create Resource Group for Managed Application"
+          if ! az group show --name "${mapp_rg}" &>/dev/null; then
+            echo "Creating resource group '${mapp_rg}'."
+            az group create --name "${mapp_rg}" --location "${location}" --tags resourceowner="${resource_owner}"
+          else
+            echo "Resource group '${mapp_rg}' already exists."
+          fi
+          echo "::endgroup::"
+          echo "mapp_rg=$mapp_rg" >> $GITHUB_OUTPUT
+
+      - name: Get Group and Role ID's
+        id: get_group_role_id
+        run: |
+          group_id=$(az ad group show --group "${{ env.azure_admin_group_name }}" | jq .id | sed 's/"//g')
+          role_id=$(az role definition list --name "${{ env.azure_admin_group_role }}" --query [].name --output tsv)
+          
+          echo "group_id=$group_id" >> $GITHUB_OUTPUT
+          echo "role_id=$role_id" >> $GITHUB_OUTPUT
+
+      - name: Create Managed Application Definition
+        id: create_mapp_def
+        run: |
+          mapp_rg="${{ steps.create_mapp_rg.outputs.mapp_rg }}"
+          location="${{ inputs.location }}"
+          resource_owner="${{ github.actor }}"
+          group_id="${{ steps.get_group_role_id.outputs.group_id }}"
+          role_id="${{ steps.get_group_role_id.outputs.role_id }}"
+          package_sas_uri="${{ inputs.package_sas_uri }}"
+          
+          mapp_def_name="${{ inputs.mapp_def_name }}"
+          mapp_def_display_name="Managed App $mapp_def_name"
+          mapp_def_description="Managed App $mapp_def_name"
+
+          echo "::group::Create Managed Application Definition"
+          echo "Creating managed application definition '${mapp_def_name}' (${group_id}:${role_id} )..."
+          mapp_def_id=$(az managedapp definition create \
+            --name "${mapp_def_name}" \
+            --location "${location}" \
+            --resource-group "${mapp_rg}" \
+            --lock-level None \
+            --display-name "${mapp_def_display_name}" \
+            --description "${mapp_def_description}" \
+            --authorizations "${group_id}:${role_id}" \
+            --package-file-uri "$package_sas_uri" \
+            --tags resourceowner="${resource_owner}" | jq .id | sed 's/"//g')
+          echo "mapp_def_id=$mapp_def_id"  
+          echo "mapp_def_name=$mapp_def_name" >> $GITHUB_OUTPUT
+          echo "::endgroup::"

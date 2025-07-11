@@ -1,0 +1,321 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Create Managed Application
+run-name: create-managed-app
+
+on:
+  workflow_call:
+    inputs:
+      #Required inputs
+      location:
+        description: 'Azure Region to deploy to'
+        required: true
+        type: string
+      update_existing_deployment_mrg_name:
+        description: 'Existing Deployment Resource Group Name for update deployments. Leave empty for new deployments.'
+        required: false
+        type: string
+      aks_cluster_sizing:
+        description: 'AKS Cluster Sizing'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+      mapp_rg_name:
+        description: 'Managed Application Resource Group Name'
+        required: true
+        type: string
+      mapp_def_name:
+        description: 'Managed Application Definition Name'
+        required: true
+        type: string
+      viya_order_sas_uri:
+        description: 'SAS URI for Viya Order'
+        required: true
+        type: string
+      ip_allow_list:
+        description: 'IP Allow List'
+        required: true
+        type: string
+      viya_admin_password:
+        description: 'Viya Admin Password'
+        required: true
+        type: string
+
+      step_install_superset_flag:
+        description: 'Step Install Superset Flag'
+        required: false
+        type: string
+      step_update_spec_cirrus_flag:
+        description: 'Step Update Spec Cirrus Flag'
+        required: false
+        type: string
+      step_update_spec_cas_flag:
+        description: 'Step Update Spec CAS Flag'
+        required: false
+        type: string
+      step_wait_for_cirrus_flag:
+        description: 'Step Wait For Cirrus Flag'
+        required: false
+        type: string
+      step_add_users:
+        description: 'Step Add Users'
+        required: false
+        type: string
+      step_disable_cas_flag:
+        description: 'Step Disable CAS Flag'
+        required: false
+        type: string
+      step_disable_nonessential_apps_run_time_flag:
+        description: 'Step Disable Non Essential Apps Run Time Flag'
+        required: false
+        type: string
+      dns_suffix:
+        description: 'DNS Suffix for the deployment (e.g. customer.com)'
+        required: false
+        type: string
+      tls_cert_b64:
+        description: 'Base64 encoded TLS certificate for the deployment'
+        required: false
+        type: string
+      tls_key_b64:
+        description: 'Base64 encoded TLS key for the deployment'
+        required: false
+        type: string
+      tls_trusted_ca_certs_b64:
+        description: 'Base64 encoded trusted CA certificates for the deployment'
+        required: false
+        type: string
+      ssh_public_key:
+        description: 'SSH Public Key for the deployment'
+        required: false
+        type: string
+      ext_pg_ids_admin_user:
+        description: 'External PostgreSQL IDS Admin User'
+        required: false
+        type: string
+      ext_pg_ids_admin_password:
+        description: 'External PostgreSQL IDS Admin Password'
+        required: false
+        type: string
+      ext_pg_cds_admin_user:
+        description: 'External PostgreSQL CDS Admin User'
+        required: false
+        type: string
+      ext_pg_cds_admin_password:
+        description: 'External PostgreSQL CDS Admin Password'
+        required: false
+        type: string
+
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  create-managed-app:
+    name: create-managed-app
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    env:
+      dns_suffix: ${{ inputs.dns_suffix || secrets.DNS_SUFFIX }}
+      tls_cert_b64: ${{ inputs.tls_cert_b64 || secrets.TLS_CERT_B64 }}
+      tls_key_b64: ${{ inputs.tls_key_b64 || secrets.TLS_KEY_B64 }}
+      tls_trusted_ca_certs_b64: ${{ inputs.tls_trusted_ca_certs_b64 || secrets.TLS_TRUSTED_CA_CERTS_B64 }}
+      ssh_public_key: ${{ inputs.ssh_public_key || secrets.SSH_PUBLIC_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Managed Application 
+        id: create-managed-app
+        run: |
+          # Create Managed Application
+          # Github action variables
+          resourceowner=${{github.actor}}
+          
+
+          echo "::group::Create Managed Application"
+          # Inputs
+          location=${{inputs.location}}
+          
+          existingDeploymentResourceGroup="${{ inputs.update_existing_deployment_mrg_name }}"
+          if [ -z "$existingDeploymentResourceGroup" ]
+          then
+            echo "No existingDeploymentResourceGroup supplied. This will be a new deployment."
+            updateExistingDeployment=false
+            aks_cluster_sizing=${{ inputs.aks_cluster_sizing }}
+          else
+            echo "existingDeploymentResourceGroup supplied: $existingDeploymentResourceGroup. This will be an update deployment."
+            updateExistingDeployment=true
+            aks_cluster_sizing="N/A"
+          fi
+          mapp_rg="${{ inputs.mapp_rg_name }}"
+          mapp_def_name="${{ inputs.mapp_def_name }}"
+          viya_order_sas_uri="${{ inputs.viya_order_sas_uri }}"
+          ip_allow_list=${{ inputs.ip_allow_list }}
+          viya_admin_password=${{ inputs.viya_admin_password }}
+          step_install_superset_flag=${{ inputs.step_install_superset_flag }}
+          step_update_spec_cirrus_flag=${{ inputs.step_update_spec_cirrus_flag }}
+          step_update_spec_cas_flag=${{ inputs.step_update_spec_cas_flag }}
+          step_wait_for_cirrus_flag=${{ inputs.step_wait_for_cirrus_flag }}
+          step_add_users=${{ inputs.step_add_users }}
+          step_disable_cas_flag=${{ inputs.step_disable_cas_flag }}
+          step_disable_nonessential_apps_run_time_flag=${{ inputs.step_disable_nonessential_apps_run_time_flag }}
+          ext_pg_ids_admin_user=${{ inputs.ext_pg_ids_admin_user }}
+          ext_pg_ids_admin_password=${{ inputs.ext_pg_ids_admin_password }}
+          ext_pg_cds_admin_user=${{ inputs.ext_pg_cds_admin_user }}
+          ext_pg_cds_admin_password=${{ inputs.ext_pg_cds_admin_password }}
+
+          echo "Inputs:"
+          echo "  location: $location"
+          echo "  mapp_rg: $mapp_rg"
+          echo "  mapp_def_name: $mapp_def_name"
+          echo "  aks_cluster_sizing: $aks_cluster_sizing"
+          echo "  viya_order_sas_uri: $viya_order_sas_uri"
+          echo "  ip_allow_list: $ip_allow_list"
+          echo "  viya_admin_password: [REDACTED]"
+          echo "  step_install_superset_flag: $step_install_superset_flag"
+          echo "  step_update_spec_cirrus_flag: $step_update_spec_cirrus_flag"
+          echo "  step_update_spec_cas_flag: $step_update_spec_cas_flag"
+          echo "  step_wait_for_cirrus_flag: $step_wait_for_cirrus_flag"
+          echo "  step_add_users: $step_add_users"
+          echo "  step_disable_cas_flag: $step_disable_cas_flag"
+          echo "  step_disable_nonessential_apps_run_time_flag: $step_disable_nonessential_apps_run_time_flag"
+          echo "  ext_pg_ids_admin_user: $ext_pg_ids_admin_user"
+          echo "  ext_pg_ids_admin_password: [REDACTED]"
+          echo "  ext_pg_cds_admin_user: $ext_pg_cds_admin_user"
+          echo "  ext_pg_cds_admin_password: [REDACTED]"
+
+
+          # Secrets (or environment variables)
+          subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # tls_cert_b64, tls_key_b64, tls_trusted_ca_certs_b64 must be defined in conjunction with deployment_dns_suffix. i.e. the certificates, key, ... must be valid for the domain name.
+          # If you do not want to use a deployment_dns_suffix, set it to empty string (as well for tls_cert_b64, tls_key_b64, tls_trusted_ca_certs_b64)
+          deployment_dns_suffix=${{ env.dns_suffix }}
+          tls_cert_b64="${{ env.tls_cert_b64 }}"
+          tls_key_b64="${{ env.tls_key_b64 }}"
+          tls_trusted_ca_certs_b64="${{ env.tls_trusted_ca_certs_b64 }}"
+          ssh_public_key="${{ env.ssh_public_key }}"
+
+          # Hardcoded variables
+          deploy_script_container_cleanup_preference=OnExpiration
+
+          # Construct variables
+          deployment_name="${mapp_rg/-rg/}"
+          managed_rg="${deployment_name}-mrg"
+          deployment_prefix="${deployment_name}"
+          
+          if [ -z "$deployment_dns_suffix" ]
+          then
+            echo "deployment_dns_suffix is not supplied. Using cloudapp.azure.com as DNS suffix."
+            deployment_dns_suffix="cloudapp.azure.com"
+            deployment_fqdn="${deployment_prefix}.${location}.cloudapp.azure.com"
+          else
+            echo "Using custom DNS suffix: $deployment_dns_suffix"
+            deployment_fqdn="${deployment_prefix}.${deployment_dns_suffix}"
+          fi
+          echo "deployment_fqdn=${deployment_fqdn}"
+
+          echo "deployment_name=${deployment_name}" >> $GITHUB_OUTPUT
+          
+          echo "managed_rg=${managed_rg}" >> $GITHUB_OUTPUT
+          
+          mapp_json=$(jq -n \
+            --arg ipAllowlist "${ip_allow_list}" \
+            --arg viyaOrderSASURI "${viya_order_sas_uri}" \
+            --arg location "${location}"\
+            --argjson updateExistingDeployment ${updateExistingDeployment}\
+            --arg existingDeploymentResourceGroup "${existingDeploymentResourceGroup}"\
+            --arg deploymentPrefix "${deployment_prefix}"\
+            --arg deploymentDnsSuffix "${deployment_dns_suffix}"\
+            --arg userSshPublicKey "${ssh_public_key}"\
+            --arg viyaAdminPassword "${viya_admin_password}"\
+            --arg aksSizing "${aks_cluster_sizing}"\
+            --arg stepInstallSupersetFlag "${step_install_superset_flag}"\
+            --arg stepUpdateSpecCirrusDeploymentsFlag "${step_update_spec_cirrus_flag}"\
+            --arg stepUpdateSpecCASDeploymentsFlag "${step_update_spec_cas_flag}"\
+            --arg stepWaitForCirrusDeploymentsFlag "${step_wait_for_cirrus_flag}"\
+            --arg stepAddUsers "${step_add_users}"\
+            --arg stepDisableCASFlag "${step_disable_cas_flag}"\
+            --arg stepDisableNonEssentialAppsRunTimeFlag "${step_disable_nonessential_apps_run_time_flag}"\
+            --arg deployScriptContainerCleanupPreference "${deploy_script_container_cleanup_preference}"\
+            --arg tlsCertB64 "${tls_cert_b64}"\
+            --arg tlsKeyB64 "${tls_key_b64}"\
+            --arg tlsTrustedCaCertsB64 "${tls_trusted_ca_certs_b64}"\
+            --arg extPgIDSAdminUser "${ext_pg_ids_admin_user}"\
+            --arg extPGIDSAdminPassword "${ext_pg_ids_admin_password}"\
+            --arg extPgCDSAdminUser "${ext_pg_cds_admin_user}"\
+            --arg extPGCDSAdminPassword "${ext_pg_cds_admin_password}"\
+            '{
+              location: {value: $location}, 
+              updateExistingDeployment: {value: $updateExistingDeployment},
+              existingDeploymentResourceGroup: {value: $existingDeploymentResourceGroup},
+              deploymentRandomId: {value: false},
+              deploymentPrefix: {value: $deploymentPrefix},
+              deploymentDnsSuffix: {value: $deploymentDnsSuffix},
+              viyaOrderSASURI: {value: $viyaOrderSASURI},
+              aksSizing:{value:$aksSizing},
+              viyaAdminPassword: {value: $viyaAdminPassword},
+              userSshPublicKey: {value: $userSshPublicKey},
+              ipAllowlist: {value: $ipAllowlist}, 
+              tlsCertB64:{value:$tlsCertB64},
+              tlsKeyB64:{value:$tlsKeyB64},
+              tlsTrustedCaCertsB64:{value:$tlsTrustedCaCertsB64},
+              extPgIDSAdminUser: {value: $extPgIDSAdminUser},
+              extPGIDSAdminPassword: {value: $extPGIDSAdminPassword},
+              extPgCDSAdminUser: {value: $extPgCDSAdminUser},
+              extPGCDSAdminPassword: {value: $extPGCDSAdminPassword},
+              stepInstallSupersetFlag:{value:$stepInstallSupersetFlag},
+              stepUpdateSpecCirrusDeploymentsFlag:{value:$stepUpdateSpecCirrusDeploymentsFlag},
+              stepUpdateSpecCASDeploymentsFlag:{value:$stepUpdateSpecCASDeploymentsFlag},
+              stepWaitForCirrusDeploymentsFlag:{value:$stepWaitForCirrusDeploymentsFlag},
+              stepAddUsers:{value:$stepAddUsers},
+              stepDisableCASFlag:{value:$stepDisableCASFlag},
+              stepDisableNonEssentialAppsRunTimeFlag:{value:$stepDisableNonEssentialAppsRunTimeFlag},
+              deployScriptContainerCleanupPreference: {value: $deployScriptContainerCleanupPreference}
+            }')
+
+          mapp_tags=(
+            "resourceowner=$resourceowner"
+          ) 
+
+          echo "Triggering managed application ..."
+          # This command is run in background 
+          az managedapp create \
+            --resource-group "${mapp_rg}" \
+            --name "${deployment_name}" \
+            --location "${location}" \
+            --kind ServiceCatalog \
+            --managed-rg-id "/subscriptions/${subscription_id}/resourceGroups/${managed_rg}" \
+            --managedapp-definition-id "/subscriptions/${subscription_id}/resourceGroups/${mapp_rg}/providers/Microsoft.Solutions/applicationDefinitions/${mapp_def_name}" \
+            --tags "${mapp_tags[@]}" \
+            --parameters "${mapp_json}" &
+
+          echo "NOTE: The managed application has been successfully triggered."
+          echo "NOTE: Please check the deployment status on the ${managed_rg} Azure resource group."
+          echo "NOTE: The deployment will take some time to be available ( < 2 hours)."
+
+          if [ -n "$tls_cert_b64" ] && [ -n "$deployment_dns_suffix" ]
+          then
+            echo "WARNING: The application has been configured with $deployment_fqdn and with the provided certificates."
+            echo "WARNING: Please make sure your DNS will have an entry for the IP address of the load balancer for $deployment_fqdn."
+            echo "WARNING: Without this step, you won't be able to access the environment with a browser."
+            echo "WARNING: As a temporary workaround, you can add an entry in your local hosts file (/etc/hosts on Linux, %SYSTEM32%\drivers\etc\hosts on Windows) for $deployment_fqdn pointing to the IP address of the Cluster's load balancer."
+          fi
+          echo "::endgroup::"

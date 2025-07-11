@@ -1,0 +1,62 @@
+slice_name: Models by Geography
+description: null
+certified_by: null
+certification_details: null
+viz_type: world_map
+params:
+  datasource: 14__table
+  viz_type: world_map
+  slice_id: 41
+  entity: tr_mrm_geographies_5
+  country_fieldtype: name
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_nbdtpk6rhj_k86dfe8xw7o
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _mrm_deployed
+  - clause: WHERE
+    comparator:
+    - mrm_DEPLOY
+    - mrm_EDIT
+    - mrm_PROD_VAL
+    - mrm_REJECT_DEV
+    - mrm_TRIAGE
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_gbdk7poxk6q_61i8han8j8u
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _modelStatus
+  row_limit: 10000
+  show_bubbles: false
+  secondary_metric: count
+  max_bubble_size: '50'
+  color_picker:
+    a: 1
+    b: 255
+    g: 216
+    r: 162
+  color_by: metric
+  linear_color_scheme: superset_seq_1
+  color_scheme: SASColorPalette
+  y_axis_format: SMART_NUMBER
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":14,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_modelStatus","op":"IN","val":["mrm_DEPLOY","mrm_EDIT","mrm_PROD_VAL","mrm_REJECT_DEV","mrm_TRIAGE"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"row_limit":10000,"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"14__table","viz_type":"world_map","slice_id":41,"entity":"tr_mrm_geographies_5","country_fieldtype":"name","metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_nbdtpk6rhj_k86dfe8xw7o","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_mrm_deployed"},{"clause":"WHERE","comparator":["mrm_DEPLOY","mrm_EDIT","mrm_PROD_VAL","mrm_REJECT_DEV","mrm_TRIAGE"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_gbdk7poxk6q_61i8han8j8u","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_modelStatus"}],"row_limit":10000,"show_bubbles":false,"secondary_metric":"count","max_bubble_size":"50","color_picker":{"a":1,"b":255,"g":216,"r":162},"color_by":"metric","linear_color_scheme":"superset_seq_1","color_scheme":"SASColorPalette","y_axis_format":"SMART_NUMBER","extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 536b7310-c302-4f8d-a358-a064618e377a
+version: 1.0.0
+dataset_uuid: d870bb2b-c955-4ece-abf0-0e55ea6f465a

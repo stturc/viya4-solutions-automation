@@ -1,0 +1,62 @@
+slice_name: Performing Poorly
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 8__table
+  viz_type: big_number_total
+  slice_id: 26
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_7p4sf2x4woy_dkle0vy0bmo
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _mrm_deployed
+  - clause: WHERE
+    comparator:
+    - mrm_PROD_VAL
+    - mrm_PENDING_RET
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_66j6m0amdh7_t3vhb13uls
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _modelStatus
+  - clause: WHERE
+    comparator:
+    - mrm_LOW
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_swnbkqnylw_ztua71o7srm
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _mrm_performanceRating
+  subheader: ''
+  header_font_size: 0.6
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  conditional_formatting: []
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":8,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_modelStatus","op":"IN","val":["mrm_PROD_VAL","mrm_PENDING_RET"]},{"col":"_mrm_performanceRating","op":"IN","val":["mrm_LOW"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"8__table","viz_type":"big_number_total","slice_id":26,"metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_7p4sf2x4woy_dkle0vy0bmo","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_mrm_deployed"},{"clause":"WHERE","comparator":["mrm_PROD_VAL","mrm_PENDING_RET"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_66j6m0amdh7_t3vhb13uls","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_modelStatus"},{"clause":"WHERE","comparator":["mrm_LOW"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_swnbkqnylw_ztua71o7srm","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_mrm_performanceRating"}],"subheader":"","header_font_size":0.6,"subheader_font_size":0.15,"y_axis_format":"SMART_NUMBER","time_format":"smart_date","conditional_formatting":[],"extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 8c0274c0-3730-44b1-8493-ad68a68051ba
+version: 1.0.0
+dataset_uuid: cdee58a6-ac57-42bc-9492-0f280c3a229f

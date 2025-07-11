@@ -1,0 +1,34 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ACTION}}-homedir
+  namespace: {{V4_CFG_NAMESPACE}}
+spec:
+ ttlSecondsAfterFinished: 100
+ template:
+  spec:
+   containers:
+   - image: busybox:1.35.0
+     command:
+       - /bin/sh
+       - -c
+       - |     
+         {{COMMAND}}
+     imagePullPolicy: IfNotPresent
+     name: {{ACTION}}-homedir
+     volumeMounts:
+     - mountPath: /mnt/viya-share/homes
+       name: nfs-homedir
+     securityContext:
+       allowPrivilegeEscalation: false
+       privileged: false
+       readOnlyRootFilesystem: true
+   restartPolicy: OnFailure
+   volumes:
+   - name: nfs-homedir
+     nfs:                                             
+       path: /export/{{V4_CFG_NAMESPACE}}/homes
+       server: {{NFS_VM_IP}}

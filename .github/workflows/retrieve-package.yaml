@@ -1,0 +1,102 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Retrieve Package
+run-name: retrieve-package
+
+on:
+  workflow_call:
+    inputs:
+      package_version:
+        description: 'Package Version (github release) to deploy'
+        required: true
+        type: string
+        default: "latest"
+      viya_solution:
+        description: 'Solution to deploy'
+        required: true
+        type: string
+      artifact_name:
+        required: true
+        type: string
+      auth_token_b64:
+        description: 'GitHub Auth Token (Base64 encoded)'
+        required: false
+        type: string
+
+    outputs:
+      artifact_file_name: 
+        value: ${{ jobs.retrieve-package.outputs.artifact_file_name }}
+
+jobs:
+  retrieve-package:
+    name: retrieve-package
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    outputs:
+      artifact_file_name: ${{ steps.find_file.outputs.artifact_file_name }}
+  
+    steps:
+      - name: Download release package
+        id: download_package
+        run: |
+          unset GH_TOKEN
+          auth_token_b64="${{ inputs.auth_token_b64 }}"
+          if [ -n "${auth_token_b64}" ]; then
+            echo "Decoding Base64 encoded auth token"
+            AUTH_GH_TOKEN=$(echo "${auth_token_b64}" | base64 --decode)
+          else
+            echo "No Base64 encoded auth token provided, using default GITHUB_TOKEN"
+            AUTH_GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
+          
+          echo "::group::Download Release Package"
+          echo "Authenticating to GitHub"
+          echo "${AUTH_GH_TOKEN}" | gh auth login --with-token
+
+          echo "retrieve auth status"
+          gh auth status
+
+          package_version="${{ inputs.package_version }}"
+          viya_solution="${{ inputs.viya_solution }}"
+          
+          # Default repo
+          repo="sassoftware/viya4-solutions-automation"
+          tag_version="$package_version"
+
+          # Check for org/repo:version format
+          if [[ "$package_version" == *:* ]]; then
+            repo_part="${package_version%%:*}"
+            version_part="${package_version##*:}"
+            repo="$repo_part"
+            tag_version="$version_part"
+          fi
+
+          if [ "$tag_version" == "latest" ]; then
+            echo "Fetching latest release version for ${viya_solution} on $repo repo."
+            tag_version=$(gh release list --repo "$repo" --json tagName,isDraft,isPrerelease --jq '[.[] | select(.isDraft == false and .isPrerelease == false)][0].tagName')
+          else
+            echo "Using specified package version: ${tag_version}"
+          fi
+
+          echo "Downloading package for tag version: ${tag_version} from repo: ${repo}"
+          mkdir -p tmp_download
+          gh release download "$tag_version" --repo "$repo" --pattern "*${viya_solution}*.zip" --dir tmp_download
+          echo "::endgroup::"
+
+      - name: Find downloaded file
+        id: find_file
+        run: |
+          file=$(find tmp_download -type f)
+          echo "Downloaded file: $file"
+          echo "file_path=$file" >> "$GITHUB_OUTPUT"
+          basename=$(basename "$file")
+          echo "artifact_file_name=$basename" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ steps.find_file.outputs.file_path }}

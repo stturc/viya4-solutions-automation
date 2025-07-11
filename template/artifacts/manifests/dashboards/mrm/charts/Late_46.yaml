@@ -1,0 +1,64 @@
+slice_name: Late
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 13__table
+  viz_type: big_number_total
+  slice_id: 46
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_0kd49jefq74o_9q0scovntjb
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _closedDttm
+  - clause: WHERE
+    comparator:
+    - OPEN
+    - WAIT_FOR_APPROVAL
+    - PENDING
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_kbxupr8kjs_iyyvf31072
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _status
+  - clause: WHERE
+    comparator: ' : now'
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_nv5ym34cu8_d0sl112444l
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    operatorId: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _currentDueDttm
+  header_font_size: 0.6
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  conditional_formatting: []
+  granularity_sqla: _closedDttm
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":13,"type":"table"},"force":false,"queries":[{"granularity":"_closedDttm","filters":[{"col":"_closedDttm","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_status","op":"IN","val":["OPEN","WAIT_FOR_APPROVAL","PENDING"]},{"col":"_currentDueDttm","op":"TEMPORAL_RANGE","val":"
+  : now"}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"13__table","viz_type":"big_number_total","slice_id":46,"metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_0kd49jefq74o_9q0scovntjb","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_closedDttm"},{"clause":"WHERE","comparator":["OPEN","WAIT_FOR_APPROVAL","PENDING"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_kbxupr8kjs_iyyvf31072","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_status"},{"clause":"WHERE","comparator":"
+  : now","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_nv5ym34cu8_d0sl112444l","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","operatorId":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_currentDueDttm"}],"header_font_size":0.6,"subheader_font_size":0.15,"y_axis_format":"SMART_NUMBER","time_format":"smart_date","conditional_formatting":[],"granularity_sqla":"_closedDttm","extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 5b534315-b7ed-46dd-80ad-dc968e17c377
+version: 1.0.0
+dataset_uuid: ced6d181-a505-4481-abb3-d52eb026a6a5

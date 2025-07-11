@@ -1,0 +1,25 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: sas-openldap-ca-issuer
+spec:
+  ca:
+    secretName: sas-viya-ca-certificate-secret
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: sas-openldap-cert
+spec:
+  secretName: sas-openldap-certs
+  duration: {{V4_CFG_OPENLDAP_CERT_DURATION}} 
+  isCA: false
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+  - "ldap-svc"
+  - "ldap-svc.{{V4_CFG_NAMESPACE}}.svc.cluster.local"
+  issuerRef:
+    name: sas-openldap-ca-issuer

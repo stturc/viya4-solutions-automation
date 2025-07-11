@@ -1,0 +1,68 @@
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: openldap-tls
+patch: |-
+  - op: replace
+    path: /data/LDAP_TLS
+    value: "true"
+  - op: add
+    path: /data/LDAP_TLS_CRT_FILENAME
+    value: ldap.crt
+  - op: add
+    path: /data/LDAP_TLS_KEY_FILENAME
+    value: ldap.key
+  - op: add
+    path: /data/LDAP_TLS_CA_CRT_FILENAME
+    value: ca.crt
+  - op: add
+    path: /data/LDAP_TLS_VERIFY_CLIENT
+    value: try
+target:
+  kind: ConfigMap
+  name: openldap-bootstrap-config
+  version: v1
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: openldap-add-env-variables
+patch: |-
+  - op: add
+    path: /spec/template/spec/containers/0/env/-
+    value:
+      name: LDAP_TLS_CRT_FILENAME
+      valueFrom:
+       configMapKeyRef:
+        key: LDAP_TLS_CRT_FILENAME
+        name: openldap-bootstrap-config
+  - op: add
+    path: /spec/template/spec/containers/0/env/-
+    value:
+      name: LDAP_TLS_KEY_FILENAME
+      valueFrom:
+       configMapKeyRef:
+        key: LDAP_TLS_KEY_FILENAME
+        name: openldap-bootstrap-config
+  - op: add
+    path: /spec/template/spec/containers/0/env/-
+    value:
+      name: LDAP_TLS_CA_CRT_FILENAME
+      valueFrom:
+       configMapKeyRef:
+        key: LDAP_TLS_CA_CRT_FILENAME
+        name: openldap-bootstrap-config
+  - op: add
+    path: /spec/template/spec/containers/0/env/-
+    value:
+      name: LDAP_TLS_VERIFY_CLIENT
+      valueFrom:
+       configMapKeyRef:
+        key: LDAP_TLS_VERIFY_CLIENT
+        name: openldap-bootstrap-config
+target:
+  kind: Deployment
+  name: openldap
+  version: v1
+

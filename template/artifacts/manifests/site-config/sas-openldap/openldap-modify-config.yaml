@@ -1,0 +1,17 @@
+---
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: openldap-config
+patch: |-
+  - op: replace
+    path: /data/LDAP_REMOVE_CONFIG_AFTER_SETUP
+    value: "true"
+  - op: replace
+    path: /data/LDAP_ADMIN_PASSWORD
+    value: {{LDAP_ADMIN_PASSWORD}}
+target:
+  kind: ConfigMap
+  name: openldap-bootstrap-config
+  version: v1
+

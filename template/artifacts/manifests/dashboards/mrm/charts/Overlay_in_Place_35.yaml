@@ -1,0 +1,80 @@
+slice_name: Overlay in Place
+description: null
+certified_by: null
+certification_details: null
+viz_type: pie
+params:
+  datasource: 14__table
+  viz_type: pie
+  slice_id: 35
+  groupby:
+  - tr_mrm_isOverlayReviewed
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_ls72cjif4zf_ryj3fp80xw
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: _mrm_deployed
+  - clause: WHERE
+    comparator:
+    - mrm_DEPLOY
+    - mrm_EDIT
+    - mrm_PROD_VAL
+    - mrm_REJECT_DEV
+    - mrm_TRIAGE
+    - 'NULL'
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_scw8w0idtg_0iyf71ag94zo
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: _modelStatus
+  - clause: WHERE
+    comparator:
+    - 'True'
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_2y4an0hnl0b_v9omieebggm
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: tr_mrm_hasOverlay
+  row_limit: 100
+  sort_by_metric: true
+  color_scheme: SASColorPalette
+  show_labels_threshold: 5
+  show_legend: false
+  legendType: scroll
+  legendOrientation: top
+  legendMargin: null
+  label_type: key
+  number_format: SMART_NUMBER
+  date_format: smart_date
+  show_labels: false
+  labels_outside: true
+  label_line: false
+  show_total: true
+  outerRadius: 70
+  donut: true
+  innerRadius: 52
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":14,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_modelStatus","op":"IN","val":["mrm_DEPLOY","mrm_EDIT","mrm_PROD_VAL","mrm_REJECT_DEV","mrm_TRIAGE","NULL"]},{"col":"tr_mrm_hasOverlay","op":"IN","val":["True"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":["tr_mrm_isOverlayReviewed"],"metrics":["count"],"orderby":[["count",false]],"annotation_layers":[],"row_limit":100,"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"14__table","viz_type":"pie","slice_id":35,"groupby":["tr_mrm_isOverlayReviewed"],"metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_ls72cjif4zf_ryj3fp80xw","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"_mrm_deployed"},{"clause":"WHERE","comparator":["mrm_DEPLOY","mrm_EDIT","mrm_PROD_VAL","mrm_REJECT_DEV","mrm_TRIAGE","NULL"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_scw8w0idtg_0iyf71ag94zo","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"_modelStatus"},{"clause":"WHERE","comparator":["True"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_2y4an0hnl0b_v9omieebggm","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"tr_mrm_hasOverlay"}],"row_limit":100,"sort_by_metric":true,"color_scheme":"SASColorPalette","show_labels_threshold":5,"show_legend":false,"legendType":"scroll","legendOrientation":"top","legendMargin":null,"label_type":"key","number_format":"SMART_NUMBER","date_format":"smart_date","show_labels":false,"labels_outside":true,"label_line":false,"show_total":true,"outerRadius":70,"donut":true,"innerRadius":52,"extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: a405412b-2a9d-4cc3-8e5a-484a925a24c7
+version: 1.0.0
+dataset_uuid: d870bb2b-c955-4ece-abf0-0e55ea6f465a

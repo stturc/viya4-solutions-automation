@@ -1,0 +1,74 @@
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "deploymentName": {
+      "type": "string"
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "[concat(parameters('deploymentName'), '-vnet')]"
+    },
+    "miscSubnetName": {
+      "type": "string",
+      "defaultValue": "[concat(parameters('deploymentName'),'-misc-subnet')]"
+    },
+    "miscSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24"
+    },
+    "ipAllowlist": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "allowSshNetworkSecurityGroup": "[concat(parameters('deploymentName'),'-nsg')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('allowSshNetworkSecurityGroup')]",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "properties": {
+        "securityRules": [
+          {
+            "name": "[concat(parameters('deploymentName'),'-ssh')]",
+            "properties": {
+              "description": "Allow SSH from Allowlist",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1001,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": "[split(parameters('ipAllowlist'), ',')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(parameters('vnetName'), '/', parameters('miscSubnetName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('allowSshNetworkSecurityGroup'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[parameters('miscSubnetPrefix')]",
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('allowSshNetworkSecurityGroup'))]"
+        }
+      }
+    }
+  ]
+}

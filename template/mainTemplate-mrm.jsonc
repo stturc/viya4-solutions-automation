@@ -1,0 +1,1073 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "updateExistingDeployment": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Set to true to update an existing deployment, false to create a new deployment."
+            }
+        },
+        "existingDeploymentResourceGroup": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The resource group name of the existing deployment to update (ending with -mrg)."
+            }
+        },        
+        "deploymentRandomId": {
+            "type": "bool",
+            "metadata": {
+                "description": "Random ID to append to the deployment prefix. This will be used to construct the FQDN for the deployment."
+            }
+        },
+        "deploymentPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Prefix for the deployment. This will be used to construct the FQDN for the deployment."
+            }
+        },
+        "deploymentName": {
+            "type": "string",
+            "defaultValue": "[if(parameters('updateExistingDeployment'), replace(parameters('existingDeploymentResourceGroup'), '-mrg', ''), concat(parameters('deploymentPrefix'), if(parameters('deploymentRandomId'), concat('-', toLower(substring(uniqueString(newGuid()), 0, 6))), '')))]"
+        },
+        "deploymentDnsSuffix": {
+            "type": "string"
+        },
+        "userSshPublicKey": {
+            "type": "string"
+        },
+        "viyaAdminPassword": {
+            "type": "string",
+            "minLength": 12
+        },
+        "viyaOrderSASURI": {
+            "type": "string"
+        },
+        "aksSizing":{
+            "type": "string",
+            "allowedValues": [
+                "ProdSmall",
+                "ProdMedium",
+                "ProdLarge",
+                "RDSmall",
+                "N/A"
+            ]
+        },
+        "ipAllowlist": {
+            "type": "string"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "[deployment().properties.templateLink.uri]",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            }
+        },
+        "guid": {
+            "type": "string",
+            "defaultValue": "[newGuid()]"
+        },
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        },
+        "vnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.0.0/16"
+        },
+        "aksSubnetPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.0.0/23"
+        },
+        "miscSubnetPrefix": {
+            "type": "string",
+            "defaultValue": "192.168.2.0/24"
+        },
+        "virtualNetworkNewOrExisting": {
+            "type": "string",
+            "metadata": {
+                "description": "Boolean indicating whether the VNet is new or existing (to support BYON in Marketplace)"
+            },
+            "allowedValues": [
+                "new",
+                "existing"
+            ],
+            "defaultValue": "new"
+        },
+        "viyaV4dVersion": {
+            "type": "string",
+            "defaultValue": "tags/7.2.0"
+        },
+        "deployScriptContainerCleanupPreference": {
+            "type": "string",
+            "allowedValues": [
+                "Always",
+                "OnExpiration",
+                "OnSuccess"
+            ],
+            "defaultValue": "OnExpiration"
+        },
+        "kubernetesVersionScriptContainerCleanupPreference": {
+            "type": "string",
+            "allowedValues": [
+                "Always",
+                "OnExpiration",
+                "OnSuccess"
+            ],
+            "defaultValue": "OnSuccess"
+        },
+        "keypairGeneratorScriptContainerCleanupPreference": {
+            "type": "string",
+            "allowedValues": [
+                "Always",
+                "OnExpiration",
+                "OnSuccess"
+            ],
+            "defaultValue": "OnExpiration"
+        },
+        "stepInstallSupersetFlag": {
+            "type": "string",
+            "allowedValues": ["Y","N"],
+            "defaultValue": "N"
+        },
+        "stepUpdateSpecCirrusDeploymentsFlag": {
+            "type": "string",
+            "allowedValues": ["Y","N"],
+            "defaultValue": "N"
+        },
+        "stepUpdateSpecCASDeploymentsFlag": {
+            "type": "string",
+            "allowedValues": ["Y","N"],
+            "defaultValue": "N"
+        },
+        "stepWaitForCirrusDeploymentsFlag": {
+            "type": "string",
+            "allowedValues": ["Y","N"],
+            "defaultValue": "Y"
+        },
+        "stepAddUsers": {
+            "type": "string",
+            "allowedValues": ["0", "1", "3", "5", "10"],
+            "defaultValue": "5"
+        },
+        "stepDisableCASFlag": {
+            "type": "string",
+            "allowedValues": ["Y","N"],
+            "defaultValue": "N"
+        },
+        "stepDisableNonEssentialAppsRunTimeFlag": {
+            "type": "string",
+            "allowedValues": ["Y","N"],
+            "defaultValue": "N"
+        },        
+        "tlsCertB64": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tlsKeyB64": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tlsTrustedCaCertsB64": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "extPgIDSAdminUser": {
+            "type": "string",
+            "defaultValue": "pgadmin"
+        },
+        "extPGIDSAdminPassword": {
+            "type": "securestring",
+            "defaultValue": "ThisIsASecurePassword123!"
+        },
+        "extPgCDSAdminUser": {
+            "type": "string",
+            "defaultValue": "pgadmin"
+        },
+        "extPGCDSAdminPassword": {
+            "type": "securestring",
+            "defaultValue": "ThisIsASecurePassword123!"
+        }
+    },
+    "variables": {
+        "azCliVersion": "2.37.0",
+        "kubernetesMajorVersion": "1.30",
+        "identityName":  "[concat(parameters('deploymentName'),'-identity')]",
+        
+        "contributorRoleId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+        "rgContributorRoleDefinitionName": "[guid(concat(variables('identityName'), '-ra-rg-contributor'))]",
+        "aksClusterUserRoleId": "4abbcc35-e782-43d8-92c5-2d3f1bd2253f",
+        "aksClusterUserRoleDefinitionName": "[guid(concat(variables('identityName'), '-ra-aks-cluster-user'))]",
+        
+        "vnetDeploymentName": "[concat(parameters('deploymentName'),'-vnet')]",
+        "nsgDeploymentName": "[concat(parameters('deploymentName'),'-nsg')]",
+        "jumpDeploymentName": "[concat(parameters('deploymentName'),'-jump')]",
+        "aksDeploymentName": "[concat(parameters('deploymentName'),'-aks')]",
+        "nfsDeploymentName": "[concat(parameters('deploymentName'),'-nfs')]",
+        "keypairGeneratorScriptName": "[concat(parameters('deploymentName'),'-ds-keypair-gen')]",
+        "kubernetesVersionScriptName": "[concat(parameters('deploymentName'),'-ds-k8s-version')]",
+        "viyaDeployDeploymentName": "[concat(parameters('deploymentName'),'-deploy')]",
+        "aksName": "[concat(parameters('deploymentName'), '-aks')]",
+        "deploymentFqdn": "[if(equals(parameters('deploymentDnsSuffix'), 'cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('location'), '.cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('deploymentDnsSuffix')))]",
+        "storageAccountName": "[concat(take(replace(parameters('deploymentName'),'-',''),17),'storage')]",
+        "storageAccountContainerName": "deploymentassets",
+        "jumpVmAdminUser": "jumpuser",
+        "nfsVmAdminUser": "nfsuser",
+        "v4CfgRwxFilestorePath": "/export",
+        "v4CfgNamespace": "sas-viya",
+        "vnetName": "[concat(parameters('deploymentName'), '-vnet')]",
+        "aksSubnetName": "[concat(parameters('deploymentName'), '-aks-subnet')]",
+        "miscSubnetName": "[concat(parameters('deploymentName'),'-misc-subnet')]",
+
+
+        "extPgIDS": {
+            "DeploymentName": "[concat(parameters('deploymentName'),'-extpg-ids')]",
+            "ServerName": "[concat(parameters('deploymentName'), '-extpg-ids')]",
+            "AdministratorLogin": "[parameters('extPgIDSAdminUser')]",
+            "AdministratorLoginPassword": "[parameters('extPGIDSAdminPassword')]",
+            "ServerEdition": "GeneralPurpose",
+            "SkuSizeGB": 128,
+            "DbInstanceType": "Standard_D4ds_v4",
+            "HaMode": "Disabled",
+            "AvailabilityZone": "1",
+            "Version": "15",
+            "SubnetCIDR": "192.168.3.0/28",
+            "Role": "default",
+            "Databases": [
+                {
+                    "name": "SharedServices",
+                    "default": "Y"
+                }
+            ]
+        },
+        "extPgCDS": {
+            "DeploymentName": "[concat(parameters('deploymentName'),'-extpg-cds')]",
+            "ServerName": "[concat(parameters('deploymentName'), '-extpg-cds')]",
+            "AdministratorLogin": "[parameters('extPgCDSAdminUser')]",
+            "AdministratorLoginPassword": "[parameters('extPGCDSAdminPassword')]",
+            "ServerEdition": "MemoryOptimized",
+            "SkuSizeGB": 64,
+            "DbInstanceType": "Standard_E4ds_v5",
+            "HaMode": "Disabled",
+            "AvailabilityZone": "1",
+            "Version": "15",
+            "SubnetCIDR": "192.168.3.0/28",
+            "Role": "cds-postgres",
+            "Databases": [
+                {
+                    "name": "SharedServices",
+                    "default": "Y"
+                }
+            ]
+        },
+
+        "aksSizing":{
+            // We should just list the differences from the default related config
+            "ProdSmall": {
+                "nodeTopology": "Standard",
+
+                "extPgConfig":[
+                    "[variables('extPgIDS')]",
+                    "[variables('extPgCDS')]"
+                ],
+                "casConfig":{
+                    "vmSize": "Standard_E4ds_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 150,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "cas"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=cas:NoSchedule"
+                    ]
+                },
+                "computeConfig":{
+                    "vmSize": "Standard_E4ds_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 150,
+                    "nodeLabels": {
+                        "launcher.sas.com/prepullImage": "sas-programming-environment",
+                        "workload.sas.com/class": "compute"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=compute:NoSchedule"
+                    ]
+                },
+                "statefulConfig":{
+                    "vmSize": "Standard_E8s_v5",
+                    "minCount": 2,
+                    "maxCount": 5,
+                    "count": 2,
+                    "osDiskSizeGB": 200,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "stateful"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=stateful:NoSchedule"
+                    ]
+                },
+                "statelessConfig":{
+                    "vmSize": "Standard_E16s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 200,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "stateless"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=stateless:NoSchedule"
+                    ]
+                },
+                "managementConfig":{
+                    "vmSize": "Standard_D4s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": []
+                },
+                "defaultConfig":{
+                    "vmSize": "Standard_D8s_v5",
+                    "minCount": 2,
+                    "maxCount": 5,
+                    "count": 2,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": [
+                        "workload.sas.com/class=defaultNodePool:NoSchedule"
+                    ]
+                },
+                "backupConfig":{
+                    "vmSize": "Standard_D4s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": [
+                        "workload.sas.com/class=backupNodePool:NoSchedule"
+                    ]
+                }
+            },
+            "ProdMedium": {
+                "nodeTopology": "Standard",
+
+                "extPgConfig":[
+                    "[variables('extPgIDS')]",
+                    "[variables('extPgCDS')]"
+                ],
+
+                "casConfig":{
+                    "vmSize": "Standard_E4ds_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 150,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "cas"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=cas:NoSchedule"
+                    ]
+                },
+                "computeConfig":{
+                    "vmSize": "Standard_E4ds_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 150,
+                    "nodeLabels": {
+                        "launcher.sas.com/prepullImage": "sas-programming-environment",
+                        "workload.sas.com/class": "compute"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=compute:NoSchedule"
+                    ]
+                },
+                "statefulConfig":{
+                    "vmSize": "Standard_E16s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 200,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "stateful"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=stateful:NoSchedule"
+                    ]
+                },
+                "statelessConfig":{
+                    "vmSize": "Standard_E16s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 200,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "stateless"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=stateless:NoSchedule"
+                    ]
+                },
+                "managementConfig":{
+                    "vmSize": "Standard_D4s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": []
+                },
+                "defaultConfig":{
+                    "vmSize": "Standard_D8s_v5",
+                    "minCount": 2,
+                    "maxCount": 5,
+                    "count": 2,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": [
+                        "workload.sas.com/class=defaultNodePool:NoSchedule"
+                    ]
+                },
+                "backupConfig":{
+                    "vmSize": "Standard_D4s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": [
+                        "workload.sas.com/class=backupNodePool:NoSchedule"
+                    ]
+                }
+            },
+            "ProdLarge": {
+                "nodeTopology": "Standard",
+
+                "extPgConfig":[
+                    "[variables('extPgIDS')]",
+                    "[variables('extPgCDS')]"
+                ],
+
+                "casConfig":{
+                    "vmSize": "Standard_E8ds_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 300,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "cas"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=cas:NoSchedule"
+                    ]
+                },
+                "computeConfig":{
+                    "vmSize": "Standard_E4ds_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 150,
+                    "nodeLabels": {
+                        "launcher.sas.com/prepullImage": "sas-programming-environment",
+                        "workload.sas.com/class": "compute"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=compute:NoSchedule"
+                    ]
+                },
+                "statefulConfig":{
+                    "vmSize": "Standard_D32s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 200,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "stateful"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=stateful:NoSchedule"
+                    ]
+                },
+                "statelessConfig":{
+                    "vmSize": "Standard_E16s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 200,
+                    "nodeLabels": {
+                        "workload.sas.com/class": "stateless"
+                    },
+                    "nodeTaints": [
+                        "workload.sas.com/class=stateless:NoSchedule"
+                    ]
+                },
+                "managementConfig":{
+                    "vmSize": "Standard_D4s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": []
+                },
+                "defaultConfig":{
+                    "vmSize": "Standard_D8s_v5",
+                    "minCount": 2,
+                    "maxCount": 5,
+                    "count": 2,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": [
+                        "workload.sas.com/class=defaultNodePool:NoSchedule"
+                    ]
+                },
+                "backupConfig":{
+                    "vmSize": "Standard_D4s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 128,
+                    "nodeLabels": {},
+                    "nodeTaints": [
+                        "workload.sas.com/class=backupNodePool:NoSchedule"
+                    ]
+                }
+            },
+            "RDSmall": {
+                "nodeTopology": "Optimized",
+
+                "extPgConfig":[],
+
+                "casConfig":{
+                    "vmSize": "Standard_E4ds_v5",
+                    "minCount": 1,
+                    "maxCount": 10,
+                    "count": 1,
+                    "osDiskSizeGB": 150,
+                    "nodeLabels": {"workload.sas.com/class" : "cas"},
+                    "nodeTaints": ["workload.sas.com/class=cas:NoSchedule"]
+                },
+                "computeConfig":{
+                    "vmSize": "Standard_E16ds_v5",
+                    "minCount": 1,
+                    "maxCount": 10,
+                    "count": 1,
+                    "osDiskSizeGB": 150,
+                    "nodeLabels": {
+                        "workload.sas.com/class"        : "compute",
+                        "launcher.sas.com/prepullImage" : "sas-programming-environment"
+                    }
+                },
+                "statefulConfig":{},
+                "statelessConfig":{},
+                "managementConfig":{
+                    "vmSize": "Standard_D4s_v5",
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "count": 1,
+                    "osDiskSizeGB": 128
+                },
+                "defaultConfig":{},
+                "backupConfig":{}
+            },
+            "N/A": {
+                "nodeTopology": "",
+                "extPgConfig":[],
+                "casConfig":{},
+                "computeConfig":{},
+                "statefulConfig":{},
+                "statelessConfig":{},
+                "managementConfig":{},
+                "defaultConfig":{},
+                "backupConfig":{}
+            }
+        },
+
+        "casConfig": "[variables('aksSizing')[parameters('aksSizing')].casConfig]",
+        "computeConfig": "[variables('aksSizing')[parameters('aksSizing')].computeConfig]",
+        "statefulConfig": "[variables('aksSizing')[parameters('aksSizing')].statefulConfig]",
+        "statelessConfig": "[variables('aksSizing')[parameters('aksSizing')].statelessConfig]",
+        "managementConfig": "[variables('aksSizing')[parameters('aksSizing')].managementConfig]",
+        "defaultConfig": "[variables('aksSizing')[parameters('aksSizing')].defaultConfig]",
+        "backupConfig": "[variables('aksSizing')[parameters('aksSizing')].backupConfig]",
+
+        "isUpdate": "[parameters('updateExistingDeployment')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-04-01",
+            "name": "pid-494eff8f-02cc-49c3-8275-d374c7f3e534-partnercenter",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
+        {
+           "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+           "name": "[variables('identityName')]",
+           "apiVersion": "2018-11-30",
+           "location": "[parameters('location')]"
+        },
+        {
+           "type": "Microsoft.Authorization/roleAssignments",
+           "apiVersion": "2022-01-01-preview",
+           "name": "[variables('rgContributorRoleDefinitionName')]",
+           "dependsOn": [
+               "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
+           ],
+           "properties": {
+               "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('contributorRoleId'))]",
+               "principalId": "[reference(variables('identityName')).principalId]",
+               "delegatedManagedIdentityResourceId": "[json('null')]",
+               "principalType": "ServicePrincipal"
+           }
+        },
+        {
+           "name": "[variables('vnetDeploymentName')]",
+           "condition": "[not(variables('isUpdate'))]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaVnet.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "vnetName": {
+                       "value": "[variables('vnetName')]"
+                   },
+                   "aksSubnetName": {
+                       "value": "[variables('aksSubnetName')]"
+                   },
+                   "miscSubnetName": {
+                       "value": "[variables('miscSubnetName')]"
+                   },
+                   "vnetAddressPrefix": {
+                       "value": "[parameters('vnetAddressPrefix')]"
+                   },
+                   "aksSubnetPrefix": {
+                       "value": "[parameters('aksSubnetPrefix')]"
+                   },
+                   "miscSubnetPrefix": {
+                       "value": "[parameters('miscSubnetPrefix')]"
+                   },
+                   "virtualNetworkNewOrExisting": {
+                       "value": "[parameters('virtualNetworkNewOrExisting')]"
+                   }
+               }
+           }
+        },
+        {
+           "name": "[variables('nsgDeploymentName')]",
+           "condition": "[not(variables('isUpdate'))]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaNsg.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "vnetName": {
+                       "value": "[variables('vnetName')]"
+                   },
+                   "miscSubnetName": {
+                       "value": "[variables('miscSubnetName')]"
+                   },
+                   "miscSubnetPrefix": {
+                       "value": "[parameters('miscSubnetPrefix')]"
+                   },
+                   "ipAllowlist": {
+                       "value": "[parameters('ipAllowlist')]"
+                   }
+               }
+           }
+        },
+        {
+           "type": "Microsoft.Storage/storageAccounts",
+           "condition": "[not(variables('isUpdate'))]",
+           "apiVersion": "2022-05-01",
+           "name": "[variables('storageAccountName')]",
+           "location": "[parameters('location')]",
+           "sku": {
+               "name": "Standard_LRS"
+           },
+           "kind": "StorageV2",
+           "properties": {
+               "accessTier": "Hot"
+           }
+        },
+        {
+           "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+           "condition": "[not(variables('isUpdate'))]",
+           "apiVersion": "2021-06-01",
+           "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('storageAccountContainerName'))]",
+           "dependsOn": [
+               "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+           ]
+        },
+        {
+           "type": "Microsoft.Resources/deploymentScripts",
+           "condition": "[not(variables('isUpdate'))]",
+           "apiVersion": "2020-10-01",
+           "name": "[variables('keypairGeneratorScriptName')]",
+           "location": "[parameters('location')]",
+           "kind": "AzureCLI",
+           "identity": {
+               "type": "UserAssigned",
+               "userAssignedIdentities": {
+                   "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": {}
+               }
+           },
+           "properties": {
+               "forceUpdateTag": "[parameters('utcValue')]",
+               "azCliVersion": "[variables('azCliVersion')]",
+               "arguments": "",
+               "environmentVariables": [
+                   {
+                       "name": "SUBSCRIPTION_ID",
+                       "value": "[subscription().subscriptionId]"
+                   },
+                   {
+                       "name": "RG",
+                       "value": "[resourceGroup().name]"
+                   },
+                   {
+                       "name": "STORAGE_ACCOUNT",
+                       "value": "[variables('storageAccountName')]"
+                   },
+                   {
+                       "name": "STORAGE_ACCOUNT_CONTAINER",
+                       "value": "[variables('storageAccountContainerName')]"
+                   }
+               ],
+               "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('viyaGenerateSshKeypair.sh', parameters('_artifactsLocationSasToken')))]",
+               "timeout": "PT30M",
+               "cleanupPreference": "[parameters('keypairGeneratorScriptContainerCleanupPreference')]",
+               "retentionInterval": "P1D"
+           },
+           "dependsOn": [
+               "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]",
+               "[resourceId('Microsoft.Authorization/roleAssignments', variables('rgContributorRoleDefinitionName'))]"
+           ]
+        },
+        {
+           "name": "[variables('nfsDeploymentName')]",
+           "condition": "[not(variables('isUpdate'))]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
+               "[resourceId('Microsoft.Resources/deployments', variables('nsgDeploymentName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaNfs.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "adminUser": {
+                       "value": "[variables('nfsVmAdminUser')]"
+                   },
+                   "subnetId": {
+                       "value": "[reference(variables('vnetDeploymentName')).outputs.miscSubnetId.value]"
+                   },
+                   "subnetPrefix": {
+                       "value": "[parameters('miscSubnetPrefix')]"
+                   },
+                   "aksSubnetPrefix": {
+                       "value": "[parameters('aksSubnetPrefix')]"
+                   },
+                   "viyaSshPublicKey": {
+                       "value": "[reference(variables('keypairGeneratorScriptName')).outputs.publicKey]"
+                   },
+                   "userSshPublicKey": {
+                       "value": "[parameters('userSshPublicKey')]"
+                   }
+               }
+           }
+        },
+        {
+           "name": "[variables('jumpDeploymentName')]",
+           "condition": "[not(variables('isUpdate'))]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
+               "[resourceId('Microsoft.Resources/deployments', variables('nfsDeploymentName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaJump.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "adminUser": {
+                       "value": "[variables('jumpVmAdminUser')]"
+                   },
+                   "subnetId": {
+                       "value": "[reference(variables('vnetDeploymentName')).outputs.miscSubnetId.value]"
+                   },
+                   "rwxFilestoreEndpoint": {
+                       "value": "[reference(variables('nfsDeploymentName')).outputs.privateIp.value]"
+                   },
+                   "rwxFilestorePath": {
+                       "value": "[variables('v4CfgRwxFilestorePath')]"
+                   },
+                   "rwxViyaPath": {
+                       "value": "[variables('v4CfgNamespace')]"
+                   },
+                   "userSshPublicKey": {
+                       "value": "[parameters('userSshPublicKey')]"
+                   }
+               }
+           }
+        },
+        {
+           "type": "Microsoft.Resources/deploymentScripts",
+           "apiVersion": "2020-10-01",
+           "name": "[variables('kubernetesVersionScriptName')]",
+           "location": "[parameters('location')]",
+           "kind": "AzureCLI",
+           "identity": {
+               "type": "UserAssigned",
+               "userAssignedIdentities": {
+                   "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": {}
+               }
+           },
+           "properties": {
+               "forceUpdateTag": "[parameters('utcValue')]",
+               "azCliVersion": "[variables('azCliVersion')]",
+               "arguments": "[concat(parameters('location'),' ',variables('kubernetesMajorVersion'))]",
+               "scriptContent": "result=$(az aks get-versions --location $1 -o json | jq -r --arg version $2 '[.orchestrators[] | select (.orchestratorVersion | contains ($version)) | .orchestratorVersion] |.[0]'); echo {\\\"kubernetesVersion\\\":\\\"$result\\\"} > $AZ_SCRIPTS_OUTPUT_PATH",
+               "timeout": "PT30M",
+               "cleanupPreference": "[parameters('kubernetesVersionScriptContainerCleanupPreference')]",
+               "retentionInterval": "PT2H"
+           },
+           "dependsOn": [
+               "[resourceId('Microsoft.Authorization/roleAssignments', variables('rgContributorRoleDefinitionName'))]"
+           ]
+        },
+        {
+           "name": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].DeploymentName]",
+           "condition": "[and(not(variables('isUpdate')),greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0))]",
+           "copy": {
+             "name": "extPgConfigLoop",
+             "count": "[length(variables('aksSizing')[parameters('aksSizing')].extPgConfig)]",
+             "mode": "serial" 
+           },
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
+               "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]",
+               "[resourceId('Microsoft.Authorization/roleAssignments', variables('rgContributorRoleDefinitionName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/pgExt.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "_artifactsLocation": {"value": "[parameters('_artifactsLocation')]"},
+                   "_artifactsLocationSasToken": {"value": "[parameters('_artifactsLocationSasToken')]"},
+                   "vnetName": {"value": "[variables('vnetName')]"},
+                   "serverName": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].ServerName]"},
+                   "location": {"value": "[resourceGroup().location]"},
+                   "administratorLogin": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].AdministratorLogin]"},
+                   "administratorLoginPassword": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].AdministratorLoginPassword]"},
+                   "serverEdition": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].ServerEdition]"},
+                   "skuSizeGB": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].SkuSizeGB]"},
+                   "dbInstanceType": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].DbInstanceType]"},
+                   "haMode": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].HaMode]"},
+                   "availabilityZone": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].AvailabilityZone]"},
+                   "version": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].Version]"},
+                   "identityName": {"value": "[variables('identityName')]"},
+                   "azCliVersion": {"value": "[variables('azCliVersion')]"},
+                   "subnetCIDR": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].SubnetCIDR]"}
+               }
+           }
+        },
+        {
+           "name": "[variables('aksDeploymentName')]",
+           "condition": "[not(variables('isUpdate'))]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
+               "[resourceId('Microsoft.Resources/deploymentScripts', variables('kubernetesVersionScriptName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaAks.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {"value": "[parameters('location')]"},
+                   "aksName": {"value": "[variables('aksName')]"},
+                   "kubernetesVersion": {"value": "[reference(variables('kubernetesVersionScriptName'), '2020-10-01').outputs.kubernetesVersion]"},
+                   "subnetId": {"value": "[reference(variables('vnetDeploymentName')).outputs.aksSubnetId.value]"},
+                   "nodeTopology": { "value": "[variables('aksSizing')[parameters('aksSizing')].nodeTopology]" },
+                   "casConfig": { "value": "[variables('casConfig')]" },
+                   "computeConfig": { "value": "[variables('computeConfig')]" },
+                   "statefulConfig": { "value": "[variables('statefulConfig')]" },
+                   "statelessConfig": { "value": "[variables('statelessConfig')]" },
+                   "managementConfig": { "value": "[variables('managementConfig')]" },
+                   "defaultConfig": { "value": "[variables('defaultConfig')]" },
+                   "backupConfig": { "value": "[variables('backupConfig')]" }
+               }
+           }
+        },
+        {
+           "name": "[variables('aksClusterUserRoleDefinitionName')]",
+           "condition": "[not(variables('isUpdate'))]",
+           "type": "Microsoft.Authorization/roleAssignments",
+           "apiVersion": "2022-01-01-preview",
+           "dependsOn": [
+               "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]",
+               "[resourceId('Microsoft.Resources/deployments', variables('aksDeploymentName'))]"
+           ],
+           "scope": "[concat('Microsoft.ContainerService/managedClusters', '/', variables('aksName'))]",
+           "properties": {
+               "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('aksClusterUserRoleId'))]",
+               "principalId": "[reference(variables('identityName')).principalId]",
+               "delegatedManagedIdentityResourceId": "[json('null')]",
+               "principalType": "ServicePrincipal"
+           }
+        },
+        {
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "name": "[variables('viyaDeployDeploymentName')]",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('aksDeploymentName'))]",
+               "[resourceId('Microsoft.Resources/deployments', variables('jumpDeploymentName'))]",
+               "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]",
+               "[resourceId('Microsoft.Resources/deploymentScripts', variables('keypairGeneratorScriptName'))]",
+               "extPgConfigLoop"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaDeploy.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "_artifactsLocation": {"value": "[parameters('_artifactsLocation')]"},
+                   "_artifactsLocationSasToken": {"value": "[parameters('_artifactsLocationSasToken')]"},
+                   "v4CfgV4dVersion": {"value": "[parameters('viyaV4dVersion')]"},
+                   "deploymentName": { "value": "[parameters('deploymentName')]" }, 
+                   "azCliVersion": { "value": "[variables('azCliVersion')]" }, 
+                   "identityName": { "value": "[variables('identityName')]" }, 
+                   "location": { "value": "[parameters('location')]" }, 
+                   "aksName": { "value": "[variables('aksName')]" }, 
+                   "kubernetesVersion": { "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]" }, 
+                   "v4CfgNamespace": { "value": "[variables('v4CfgNamespace')]" }, 
+                   "v4CfgRwxFilestorePath": { "value": "[variables('v4CfgRwxFilestorePath')]" }, 
+                   "v4CfgIngressDnsPrefix": { "value": "[parameters('deploymentPrefix')]" }, 
+                   "v4CfgIngressFqdn": { "value": "[variables('deploymentFqdn')]" }, 
+                   "v4CfgLoadBalancerSourceRanges": { "value": "[parameters('ipAllowlist')]" }, 
+                   "nfsDeploymentName": { "value": "[variables('nfsDeploymentName')]" },
+                   "nfsVmAdminUser": { "value": "[variables('nfsVmAdminUser')]" }, 
+                   "storageAccountName": { "value": "[variables('storageAccountName')]" }, 
+                   "storageAccountContainerName": { "value": "[variables('storageAccountContainerName')]" }, 
+                   "viyaAdminPassword": { "value": "[parameters('viyaAdminPassword')]" }, 
+                   "jumpDeploymentName": { "value": "[variables('jumpDeploymentName')]" },
+                   "deployScriptContainerCleanupPreference": { "value": "[parameters('deployScriptContainerCleanupPreference')]" }, 
+                   "stepInstallSupersetFlag": { "value": "[parameters('stepInstallSupersetFlag')]" }, 
+                   "stepUpdateSpecCirrusDeploymentsFlag": { "value": "[parameters('stepUpdateSpecCirrusDeploymentsFlag')]" }, 
+                   "stepUpdateSpecCASDeploymentsFlag": { "value": "[parameters('stepUpdateSpecCASDeploymentsFlag')]" }, 
+                   "stepWaitForCirrusDeploymentsFlag": { "value": "[parameters('stepWaitForCirrusDeploymentsFlag')]" }, 
+                   "stepAddUsers": { "value": "[parameters('stepAddUsers')]" }, 
+                   "stepDisableCASFlag": { "value": "[parameters('stepDisableCASFlag')]" }, 
+                   "stepDisableNonEssentialAppsRunTimeFlag": { "value": "[parameters('stepDisableNonEssentialAppsRunTimeFlag')]" }, 
+                   "extPgConfigB64": { "value": "[base64(string(variables('aksSizing')[parameters('aksSizing')].extPgConfig))]" },
+                   "tlsCertB64": { "value": "[parameters('tlsCertB64')]" }, 
+                   "tlsKeyB64": { "value": "[parameters('tlsKeyB64')]" }, 
+                   "tlsTrustedCaCertsB64": { "value": "[parameters('tlsTrustedCaCertsB64')]" },
+                   "viyaOrderSASURI": { "value": "[parameters('viyaOrderSASURI')]" },
+                   "isUpdate": {"value": "[variables('isUpdate')]" }
+               }
+           }
+        }
+    ],
+    "outputs": {
+        "sasViyaUrl": {
+            "type": "string",
+            "value": "[variables('deploymentFqdn')]"
+        },
+        "sasViyaJumpIp": {
+            "type": "string",
+            "value": "[if(not(variables('isUpdate')), reference(variables('jumpDeploymentName')).outputs.publicIp.value, json('null'))]"
+        },
+        "sasViyaCaCertificateBase64": {
+           "type": "string",
+           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CaCertificateBase64.value]"
+        },
+        "sasViyaCadence": {
+           "type": "string",
+           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CfgCadence.value]"
+        },
+        "sasViyaIngressIp": {
+           "type": "string",
+           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4IngressIp.value]"
+        },
+        "kubernetesVersion": {
+           "type": "string",
+           "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]"
+        }
+    }
+}

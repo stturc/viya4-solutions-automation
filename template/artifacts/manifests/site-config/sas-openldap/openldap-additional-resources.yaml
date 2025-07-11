@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sas-openldap-database
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi #change this to desired capacity
+  storageClassName: sas #change this the desired storage class
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sas-openldap-config
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi #change this to desired capacity
+  storageClassName: sas #change this the desired storage class
+

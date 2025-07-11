@@ -1,0 +1,97 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Parse additional parameters
+
+on:
+  workflow_call:
+    inputs:
+      json_input:
+        required: true
+        type: string
+      extracted_keys_with_defaults:
+        required: true
+        type: string
+      keys_to_b64:
+        required: false
+        type: string
+    outputs:
+      vars:
+        description: 'A map of parsed outputs'
+        value: ${{ jobs.parse.outputs.parsed_outputs }}
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    outputs:
+      parsed_outputs: ${{ steps.extract.outputs.result }}
+
+    steps:
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Extract and encode JSON values
+        id: extract
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          json_input='${{ inputs.json_input }}'
+          all_keys='${{ inputs.extracted_keys_with_defaults }}'
+          # ⬇️  single-quoted default so the expression parser is happy
+          keys_to_b64='${{ inputs.keys_to_b64 }}'
+          if [ -z "$keys_to_b64" ]; then
+            keys_to_b64="[]"
+          fi
+
+          # Turn the b64 list into a bash array
+          mapfile -t b64_keys < <(echo "$keys_to_b64" | jq -r '.[]')
+          echo "Parsed b64_keys: ${b64_keys[@]}"
+
+          declare -A outputs
+
+          echo "::group::Processing outputs"
+
+          # ── Raw (non-base64) keys ──────────────────────────────
+          for key in $(echo "$all_keys" | jq -r 'keys[]'); do
+            if [[ " ${b64_keys[*]} " == *" $key "* ]]; then
+              echo "Skipping raw '$key' (base64 only)"
+              continue
+            fi
+
+            value=$(echo "$json_input" | jq -r --arg k "$key" '.[$k] // empty')
+            [[ -z $value ]] && value=$(echo "$all_keys" | jq -r --arg k "$key" '.[$k] // empty')
+
+            if [[ -n $value ]]; then
+              outputs["$key"]="$value"
+              echo "$key=$value"
+            fi
+          done
+
+          # ── Base64 keys ───────────────────────────────────────
+          for key in "${b64_keys[@]}"; do
+            value=$(echo "$json_input" | jq -r --arg k "$key" '.[$k] // empty')
+            if [ -z "$value" ]; then
+              value=$(echo "$all_keys" | jq -r --arg k "$key" '.[$k] // empty')
+            fi
+
+            if [ -n "$value" ]; then
+              encoded=$(echo -n "$value" | base64)
+              outputs["${key}_b64"]="$encoded"
+              echo "${key}_b64=$encoded"
+            fi
+          done
+
+          echo "::endgroup::"
+
+          # ── Build compact JSON for the caller ─────────────────
+          json_output=$(jq -n '{}')
+          for k in "${!outputs[@]}"; do
+            echo "Adding '$k' to JSON output with value: ${outputs[$k]}"
+            json_output=$(echo "$json_output" | jq --arg key "$k" --arg val "${outputs[$k]}" '. + {($key): $val}')
+          done
+
+          compact=$(echo "$json_output" | jq -c .)
+          echo "Compact JSON output: $compact"
+          echo "result=$compact" >> "$GITHUB_OUTPUT"

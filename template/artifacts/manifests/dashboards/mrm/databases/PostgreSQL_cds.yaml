@@ -1,0 +1,16 @@
+database_name: PostgreSQL cds
+sqlalchemy_uri: postgresql+psycopg2://dbmsowner:XXXXXXXXXX@10.0.33.45:5432/SharedServices
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: false
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_file_upload: false
+extra:
+  metadata_params: {}
+  engine_params: {}
+  metadata_cache_timeout: {}
+  schemas_allowed_for_file_upload: []
+uuid: 73664b7c-16c6-4bef-93c0-0457a943526e
+version: 1.0.0

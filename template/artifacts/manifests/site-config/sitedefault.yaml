@@ -1,0 +1,61 @@
+cacerts:
+config:
+    configuration:
+        sas.configuration:
+            custom:
+             enhancedSiteDefaultsEnabled: true
+    application:
+        sas.event.configuration.arke.enabled: false
+        htmlcommons:
+            disableWelcomeScreens: true
+        sas.studio:
+            showServerFiles: true
+            serverDisplayName: 'Files'
+            fileNavigationRoot: 'CUSTOM'
+            fileNavigationCustomRootPath: /export/{{V4_CFG_NAMESPACE}}
+        sas.identities.providers.ldap.connection:
+            host: ldap-svc
+            password: {{LDAP_ADMIN_PASSWORD}}
+            port: 636
+            userDN: cn=admin,dc=example,dc=com
+            url: ldaps://${sas.identities.providers.ldap.connection.host}:${sas.identities.providers.ldap.connection.port}
+        sas.identities.providers.ldap.group:
+            baseDN: ou=groups,dc=example,dc=com
+            accountId: cn
+            member: uniqueMember
+            memberOf: memberOf
+            objectClass: groupOfUniqueNames
+            objectFilter: (objectClass=groupOfUniqueNames)
+            searchFilter: cn={0}
+        sas.identities.providers.ldap.user:
+            baseDN: ou=people,dc=example,dc=com
+            accountId: uid
+            memberOf: memberOf
+            objectClass: inetOrgPerson
+            objectFilter: (objectClass=inetOrgPerson)
+            searchFilter: uid={0}
+        sas.logon.initial.password: {{SASBOOT_ADMIN_PASSWORD}}
+        # sas.logon.oauth.providers:
+        #     keycloak_oidc:
+        #         addShadowUserOnLogin: true
+        #         attributeMappings.user_name: preferred_username
+        #         authUrl: https://{{V4_CFG_INGRESS_FQDN}}/keycloak/realms/viya/protocol/openid-connect/auth
+        #         clientAuthInBody: false
+        #         discoveryUrl: https://{{V4_CFG_INGRESS_FQDN}}/keycloak/realms/viya/.well-known/openid-configuration
+        #         emailDomain: example.com
+        #         linkText: Use SSO to login
+        #         name: keycloak_oidc
+        #         relyingPartyId: viya
+        #         relyingPartySecret: {{UUID}}
+        #         scopes: openid
+        #         showLinkText: true
+        #         tokenUrl: https://{{V4_CFG_INGRESS_FQDN}}/keycloak/realms/viya/protocol/openid-connect/token
+        # sas.compute.server:
+        #     configuration_options:
+        #         contents: -azureauthcacheloc "/access-clients/AzureAccessKeys/spre"
+    identities:
+        sas.identities:
+            administrator: viya_admin
+            identifier.generateUids: true
+            identifier.generateGids: true
+            identifier.homeDirectoryPrefix: /export/{{V4_CFG_NAMESPACE}}/homes

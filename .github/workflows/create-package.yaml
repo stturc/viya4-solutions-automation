@@ -1,0 +1,157 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: Create Package
+run-name: create-package
+
+on:
+  push:
+    paths:
+      - 'template/**'
+      
+
+jobs:
+  Create-Package:
+    name: Package
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        VIYA_SOLUTION: [MRM]
+
+    env:
+      base_version: v0.0.2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+
+      - name: Set version with run ID
+        id: versioning
+        run: |
+          echo "TAG=${base_version}.${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      - name: Run packaging script (creates ZIP)
+        run: |
+          echo "Starting package.sh"
+          VIYA_SOLUTION=${{ matrix.VIYA_SOLUTION }}
+          echo "VIYA_SOLUTION=${VIYA_SOLUTION} (uppercase)"
+          viya_solution=${VIYA_SOLUTION,,}
+          echo "viya_solution=$viya_solution (lowercase)"
+
+          template_filename=viyaTemplate-${VIYA_SOLUTION}.zip
+
+          function jsonc2json {
+            tmp=$(mktemp)
+            sed -E '/^\s*\/\//d; s/\/\*.*\*\///g' $1 > $tmp
+            mv $tmp $2
+          }
+
+          echo "removing old packages if they exist..."
+          if [ -f "${template_filename}" ]; then
+            rm ${template_filename}
+          fi
+
+
+          ######################################################
+          ## Creation of viyaManifests.zip
+          ######################################################
+          if [ -f "artifacts/template/viyaManifests.zip" ]; then
+            rm artifacts/viyaManifests.zip
+          fi
+
+          echo "packaging manifests..."
+          cd template/artifacts/manifests
+          manifestsToAdd=()
+
+          case "$VIYA_SOLUTION" in 
+            "MRM")
+              manifestsToAdd+=("cluster/*")
+              manifestsToAdd+=("cirrus/*")
+              manifestsToAdd+=("dashboards/*")
+              manifestsToAdd+=("homedirs/*")
+              manifestsToAdd+=("site-config/sas-openldap/*")
+              manifestsToAdd+=("site-config/tls/*")
+              manifestsToAdd+=("site-config/sitedefault.yaml")
+            ;;
+          esac
+
+          zip -r viyaManifests.zip ${manifestsToAdd[*]}
+          mv viyaManifests.zip ../
+
+
+          ######################################################
+          ## Creation of final template - this will include the viyaManifests.zip created above
+          ######################################################
+          echo "packaging template ..."
+          cd ../../../template
+          templatesToAdd=()
+
+          # Convert jsonc to json
+          jsonc2json mainTemplate-${viya_solution}.jsonc mainTemplate.json
+          # Convert jsonc to json
+          jsonc2json createUiDefinition-${viya_solution}.jsonc createUiDefinition.json
+
+          templatesToAdd+=("mainTemplate.json")
+          templatesToAdd+=("createUiDefinition.json")
+          templatesToAdd+=("artifacts/viyaManifests.zip")
+          templatesToAdd+=("viyaDeploy.sh")
+
+          case "$VIYA_SOLUTION" in 
+            "MRM")
+              templatesToAdd+=("artifacts/pgExt.json")
+              # Convert jsonc to json
+              jsonc2json artifacts/viyaAks.jsonc artifacts/viyaAks.json
+              templatesToAdd+=("artifacts/viyaAks.json")
+              templatesToAdd+=("artifacts/viyaDeploy.json")
+              templatesToAdd+=("artifacts/viyaJump.json")
+              templatesToAdd+=("artifacts/viyaNfs.json")
+              templatesToAdd+=("artifacts/viyaNsg.json")
+              templatesToAdd+=("artifacts/viyaVnet.json")
+              templatesToAdd+=("viyaGenerateSshKeypair.sh")
+              templatesToAdd+=("waitForPG.sh")
+            ;;
+          esac
+
+          zip -r ${template_filename} ${templatesToAdd[*]}
+
+          echo "Show content of zip file (for debug purposes)"
+          unzip -l ${template_filename}
+
+          mv ${template_filename} ../
+          cd ..
+
+          echo "Package complete."
+
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag ${{ steps.versioning.outputs.TAG }}
+          git push origin ${{ steps.versioning.outputs.TAG }}
+
+      - name: Create release
+        run: |
+          tag="${{ steps.versioning.outputs.TAG }}"
+          title="Release ${{ steps.versioning.outputs.TAG }}"
+          if [ "${{ github.ref_name }}" == "main" ] 
+          then
+            gh release create "${tag}" --title "${title}" 
+          else
+            gh release create "${tag}" --title "(PreRelease) ${title}" --prerelease
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload asset to release
+        run: |
+          cp viyaTemplate-${{matrix.VIYA_SOLUTION}}.zip package-${{matrix.VIYA_SOLUTION}}-${{ steps.versioning.outputs.TAG }}.zip
+          gh release upload "${{ steps.versioning.outputs.TAG }}" package-${{matrix.VIYA_SOLUTION}}-${{ steps.versioning.outputs.TAG }}.zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

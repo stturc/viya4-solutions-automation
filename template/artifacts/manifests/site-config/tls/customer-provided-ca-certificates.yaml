@@ -1,0 +1,8 @@
+apiVersion: builtin
+kind: ConfigMapGenerator
+metadata:
+  name: sas-customer-provided-ca-certificates
+behavior: merge
+files:
+- site-config/tls/ca-certs/isrgrootx1.pem
+- site-config/tls/ca-certs/isrg-root-x2.pem

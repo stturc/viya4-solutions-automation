@@ -1,0 +1,63 @@
+slice_name: Performance Rating
+description: null
+certified_by: null
+certification_details: null
+viz_type: pie
+params:
+  datasource: 14__table
+  viz_type: pie
+  slice_id: 33
+  groupby:
+  - tr_mrm_performanceRating
+  metric: count
+  adhoc_filters:
+  - expressionType: SIMPLE
+    subject: _mrm_deployed
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_opq12svzao_u7r50imjj0s
+  - expressionType: SIMPLE
+    subject: _modelStatus
+    operator: IS NOT NULL
+    operatorId: IS_NOT_NULL
+    comparator: null
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_7c8gxflyna9_3rlo71l6eq
+  row_limit: 100
+  sort_by_metric: true
+  color_scheme: d3Category10
+  show_labels_threshold: ''
+  show_legend: false
+  legendType: scroll
+  legendOrientation: top
+  legendMargin: null
+  label_type: key
+  number_format: ~g
+  date_format: smart_date
+  show_labels: false
+  labels_outside: true
+  label_line: false
+  show_total: true
+  outerRadius: 72
+  donut: true
+  innerRadius: 52
+  extra_form_data: {}
+  dashboards:
+  - 4
+query_context: '{"datasource":{"id":14,"type":"table"},"force":false,"queries":[{"filters":[{"col":"_mrm_deployed","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"_modelStatus","op":"IS NOT NULL"}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":["tr_mrm_performanceRating"],"metrics":["count"],"orderby":[["count",false]],"annotation_layers":[],"row_limit":100,"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"14__table","viz_type":"pie","slice_id":33,"groupby":["tr_mrm_performanceRating"],"metric":"count","adhoc_filters":[{"expressionType":"SIMPLE","subject":"_mrm_deployed","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_opq12svzao_u7r50imjj0s"},{"expressionType":"SIMPLE","subject":"_modelStatus","operator":"IS
+  NOT NULL","operatorId":"IS_NOT_NULL","comparator":null,"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_7c8gxflyna9_3rlo71l6eq"}],"row_limit":100,"sort_by_metric":true,"color_scheme":"d3Category10","show_labels_threshold":"","show_legend":false,"legendType":"scroll","legendOrientation":"top","legendMargin":null,"label_type":"key","number_format":"~g","date_format":"smart_date","show_labels":false,"labels_outside":true,"label_line":false,"show_total":true,"outerRadius":72,"donut":true,"innerRadius":52,"extra_form_data":{},"dashboards":[4],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: 94b0ad36-0c62-4c38-be95-a223c94da4b7
+version: 1.0.0
+dataset_uuid: d870bb2b-c955-4ece-abf0-0e55ea6f465a
