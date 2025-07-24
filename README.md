@@ -6,7 +6,6 @@ Currently, this repository supports the following combinations:
 
 |SAS solution              |Cadence           |AKS Kubernetes Version|
 |--------------------------|------------------|--------|
-|SAS Model Risk Management | stable - 2025.02 | 1.30.6 |
 |SAS Model Risk Management | stable - 2025.03 | 1.30.6 |
 |SAS Model Risk Management | stable - 2025.04 | 1.30.6 |
 |SAS Model Risk Management | stable - 2025.05 | 1.30.6 |

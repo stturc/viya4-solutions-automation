@@ -143,7 +143,7 @@ jobs:
           then
             gh release create "${tag}" --title "${title}" 
           else
-            gh release create "${tag}" --title "(Draft) ${title}" --draft
+            gh release create "${tag}" --title "(PreRelease) ${title}" --prerelease
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

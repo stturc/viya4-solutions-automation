@@ -52,6 +52,7 @@ jobs:
             AUTH_GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
           fi
           
+          echo "::group::Download Release Package"
           echo "Authenticating to GitHub"
           echo "${AUTH_GH_TOKEN}" | gh auth login --with-token
 
@@ -83,6 +84,7 @@ jobs:
           echo "Downloading package for tag version: ${tag_version} from repo: ${repo}"
           mkdir -p tmp_download
           gh release download "$tag_version" --repo "$repo" --pattern "*${viya_solution}*.zip" --dir tmp_download
+          echo "::endgroup::"
 
       - name: Find downloaded file
         id: find_file

@@ -149,6 +149,8 @@ jobs:
           # Github action variables
           resourceowner=${{github.actor}}
           
+
+          echo "::group::Create Managed Application"
           # Inputs
           location=${{inputs.location}}
           mapp_rg="${{ inputs.mapp_rg}}"
@@ -306,3 +308,4 @@ jobs:
             echo "WARNING: Without this step, you won't be able to access the environment with a browser."
             echo "WARNING: As a temporary workaround, you can add an entry in your local hosts file (/etc/hosts on Linux, %SYSTEM32%\drivers\etc\hosts on Windows) for $deployment_fqdn pointing to the IP address of the Cluster's load balancer."
           fi
+          echo "::endgroup::"

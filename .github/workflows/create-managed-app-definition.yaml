@@ -77,13 +77,14 @@ jobs:
           resource_owner="${{ github.actor }}"
           mapp_rg="${mapp_rg_prefix}-${{ github.run_id }}-rg"
 
+          echo "::group::Create Resource Group for Managed Application"
           if ! az group show --name "${mapp_rg}" &>/dev/null; then
             echo "Creating resource group '${mapp_rg}'."
             az group create --name "${mapp_rg}" --location "${location}" --tags resourceowner="${resource_owner}"
           else
             echo "Resource group '${mapp_rg}' already exists."
           fi
-          
+          echo "::endgroup::"
           echo "mapp_rg=$mapp_rg" >> $GITHUB_OUTPUT
 
       - name: Get Group and Role ID's
@@ -109,6 +110,7 @@ jobs:
           mapp_def_display_name="Managed App ${{ github.run_id }}"
           mapp_def_description="Deployed from release ${{ github.run_id }}"
 
+          echo "::group::Create Managed Application Definition"
           echo "Creating managed application definition '${mapp_def_name}' (${group_id}:${role_id} )..."
           mapp_def_id=$(az managedapp definition create \
             --name "${mapp_def_name}" \
@@ -122,3 +124,4 @@ jobs:
             --tags resourceowner="${resource_owner}" | jq .id | sed 's/"//g')
           echo "mapp_def_id=$mapp_def_id"  
           echo "mapp_def_name=$mapp_def_name" >> $GITHUB_OUTPUT
+          echo "::endgroup::"

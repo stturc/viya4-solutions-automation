@@ -30,10 +30,13 @@ jobs:
         run: |
           viya_solution_name="${{ inputs.viya_solution_name }}"
           
+          echo "::group::Determine Viya Solution"
           case "$viya_solution_name" in
             "SAS Model Risk Management") viya_solution="MRM" ;;
             *) echo "Unknown solution name: $viya_solution_name"; exit 1 ;;
           esac
+          echo "Determined Viya solution: $viya_solution"
+          echo "::endgroup::"
           
           echo "viya_solution=$viya_solution" >> $GITHUB_OUTPUT
   

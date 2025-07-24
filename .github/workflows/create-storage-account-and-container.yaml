@@ -68,12 +68,14 @@ jobs:
           location="${{ inputs.location }}"
           resource_owner="${{ github.actor }}"
 
+          echo "::group::Create/Use Resource group for Storage account"
           if ! az group show --name "${storage_account_rg}" &>/dev/null; then
             az group create --name "${storage_account_rg}" --location "${location}" --tags resourceowner="${resource_owner}"
             echo "Resource group '${storage_account_rg}' created."
           else
             echo "Resource group '${storage_account_rg}' already exists."
           fi
+          echo "::endgroup::"
 
       - name: Create/Use Storage account and Storage container
         id: create_storage_account
@@ -84,6 +86,7 @@ jobs:
           storage_account_rg="${{ inputs.storage_account_rg }}"
           storage_account_name="${{ inputs.storage_account_name }}"
 
+          echo "::group::Create/Use Storage account and Storage container"
           # Check if the storage account exists
           if [ $(az storage account check-name --name "${storage_account_name}" --query "nameAvailable") == "false" ]; then
             echo "Storage account '${storage_account_name}' already exists."
@@ -96,6 +99,7 @@ jobs:
               --sku Standard_LRS \
               --tags resourceowner="${resource_owner}"
           fi
+          echo "::endgroup::"
 
       - name: Get Azure Storage Account Key
         id: get_storage_account_key
@@ -115,7 +119,7 @@ jobs:
           storage_account_container_prefix="${{ inputs.storage_account_container_prefix }}"
           storage_account_container_name="${storage_account_container_prefix}-${{ github.run_id }}"
           
-
+          echo "::group::Create Storage Account Container"
           echo "Creating storage account container '${storage_account_container_name}'."
           az storage container create \
             --account-name "${storage_account_name}" \
@@ -123,7 +127,8 @@ jobs:
             --name "${storage_account_container_name}"
 
           echo "Storage account container '${storage_account_container_name}' created."
-          
+          echo "::endgroup::"
+
           echo "storage_account_container_name=$storage_account_container_name" >> $GITHUB_OUTPUT
 
       - name: Download artifact passed from caller
@@ -138,6 +143,7 @@ jobs:
           storage_account_container_name="${{ steps.create_storage_container.outputs.storage_account_container_name }}"
           storage_account_key="${{ steps.get_storage_account_key.outputs.storage_account_key }}"
           
+          echo "::group::Upload package to Azure Storage"
           echo "Uploading artifact to storage account container '${STORAGE_ACCOUNT_CONTAINER_NAME}'."
           # Upload the ZIP file to the storage account container
           az storage blob upload \
@@ -160,5 +166,7 @@ jobs:
           --https-only)
         
           package_sas_uri=$(echo $package_sas_uri_raw | sed 's/"//g')
+          echo "package_sas_uri=$package_sas_uri"
+          echo "::endgroup::"
 
           echo "package_sas_uri=$package_sas_uri" >> $GITHUB_OUTPUT
