@@ -116,7 +116,7 @@ jobs:
           storage_account_rg="${{ inputs.storage_account_rg }}"
           storage_account_name="${{ inputs.storage_account_name }}"
           storage_account_key="${{ steps.get_storage_account_key.outputs.storage_account_key }}"
-          storage_account_container_name="${storage_account_container_name}"
+          storage_account_container_name="${inputs.storage_account_container_name}"
           
           echo "::group::Create Storage Account Container"
           echo "Creating storage account container '${storage_account_container_name}'."
