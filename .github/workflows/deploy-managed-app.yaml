@@ -124,7 +124,7 @@ jobs:
     with:
       storage_account_rg: sa-rg
       storage_account_name: viyasolutions  # Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only.
-      storage_account_container_prefix: sac
+      storage_account_container_name: sac-${{github.run_id}}
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       environment: ${{ inputs.environment }}
       artifact_name: package2
