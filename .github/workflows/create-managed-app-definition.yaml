@@ -14,6 +14,9 @@ on:
       mapp_def_prefix:
         required: true
         type: string
+      mapp_suffix_id:
+        required: true
+        type: string
       location: 
         required: true
         type: string        
@@ -31,6 +34,7 @@ on:
         description: 'Azure AD Group Role for Managed Application Definition'
         required: false
         type: string
+      
 
     outputs:
       mapp_rg: 
@@ -75,7 +79,7 @@ jobs:
           mapp_rg_prefix="${{ inputs.mapp_rg_prefix }}"
           location="${{ inputs.location }}"
           resource_owner="${{ github.actor }}"
-          mapp_rg="${mapp_rg_prefix}-${{ github.run_id }}-rg"
+          mapp_rg="${mapp_rg_prefix}-${{ inputs.mapp_suffix_id }}-rg"
 
           echo "::group::Create Resource Group for Managed Application"
           if ! az group show --name "${mapp_rg}" &>/dev/null; then
@@ -106,9 +110,9 @@ jobs:
           role_id="${{ steps.get_group_role_id.outputs.role_id }}"
           package_sas_uri="${{ inputs.package_sas_uri }}"
           
-          mapp_def_name="${{ inputs.mapp_def_prefix }}-${{ github.run_id }}"
-          mapp_def_display_name="Managed App ${{ github.run_id }}"
-          mapp_def_description="Deployed from release ${{ github.run_id }}"
+          mapp_def_name="${{ inputs.mapp_def_prefix }}-${{ inputs.mapp_suffix_id }}"
+          mapp_def_display_name="Managed App ${{ inputs.mapp_suffix_id }}"
+          mapp_def_description="Deployed from release ${{ inputs.mapp_suffix_id }}"
 
           echo "::group::Create Managed Application Definition"
           echo "Creating managed application definition '${mapp_def_name}' (${group_id}:${role_id} )..."

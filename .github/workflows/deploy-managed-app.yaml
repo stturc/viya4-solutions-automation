@@ -141,6 +141,7 @@ jobs:
       package_sas_uri: ${{ needs.call-create-storage-account-and-container.outputs.package_sas_uri }}
       mapp_rg_prefix: mapp
       mapp_def_prefix: mappdef
+      mapp_suffix_id: ${{ github.run_id }}
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       azure_admin_group_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_name }}
       azure_admin_group_role: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_role }}
