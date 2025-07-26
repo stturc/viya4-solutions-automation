@@ -157,7 +157,7 @@ jobs:
           echo "::group::Create Managed Application"
           # Inputs
           location=${{inputs.location}}
-          mapp_rg="${inputs.mapp_rg_prefix}-${{ inputs.mapp_suffix_id }}-rg"
+          mapp_rg="${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-rg"
           mapp_def_name="${{ inputs.mapp_def_prefix }}-${{ inputs.mapp_suffix_id }}"
           aks_cluster_sizing=${{ inputs.aks_cluster_sizing }}
           viya_order_sas_uri="${{ inputs.viya_order_sas_uri }}"
