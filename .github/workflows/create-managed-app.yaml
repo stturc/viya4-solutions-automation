@@ -21,12 +21,16 @@ on:
         description: 'Environment to deploy to'
         required: true
         type: string
-      mapp_def_name:
-        description: 'Managed Application Definition Name'
+      mapp_rg_prefix:
+        description: 'Managed Application Resource Group Prefix'
         required: true
         type: string
-      mapp_rg:
-        description: 'Managed Application Resource Group'
+      mapp_def_prefix:
+        description: 'Managed Application Definition Prefix'
+        required: true
+        type: string
+      mapp_suffix_id:
+        description: 'Managed Application Suffix ID'
         required: true
         type: string
       viya_order_sas_uri:
@@ -153,12 +157,11 @@ jobs:
           echo "::group::Create Managed Application"
           # Inputs
           location=${{inputs.location}}
-          mapp_rg="${{ inputs.mapp_rg}}"
-          mapp_def_name="${{ inputs.mapp_def_name}}"
+          mapp_rg="${inputs.mapp_rg_prefix}-${{ inputs.mapp_suffix_id }}-rg"
+          mapp_def_name="${{ inputs.mapp_def_prefix }}-${{ inputs.mapp_suffix_id }}"
           aks_cluster_sizing=${{ inputs.aks_cluster_sizing }}
           viya_order_sas_uri="${{ inputs.viya_order_sas_uri }}"
           viya_cli_sas_uri="${{ inputs.viya_cli_sas_uri }}"
-
           ip_allow_list=${{ inputs.ip_allow_list }}
           viya_admin_password=${{ inputs.viya_admin_password }}
           step_install_superset_flag=${{ inputs.step_install_superset_flag }}

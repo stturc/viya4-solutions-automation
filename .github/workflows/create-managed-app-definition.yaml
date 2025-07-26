@@ -34,16 +34,7 @@ on:
         description: 'Azure AD Group Role for Managed Application Definition'
         required: false
         type: string
-      
 
-    outputs:
-      mapp_rg: 
-        description: 'Managed Application Resource Group'
-        value: ${{ jobs.create-managed-app-definition.outputs.mapp_rg }}
-      mapp_def_name:
-        description: 'Managed Application Definition ID'
-        value: ${{ jobs.create-managed-app-definition.outputs.mapp_def_name }}
-      
 permissions:
   id-token: write
   contents: read
@@ -54,9 +45,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 
-    outputs:
-      mapp_rg: ${{ steps.create_mapp_rg.outputs.mapp_rg }}
-      mapp_def_name: ${{ steps.create_mapp_def.outputs.mapp_def_name }}
     env:
       azure_admin_group_name: ${{ inputs.azure_admin_group_name || secrets.AZURE_ADMIN_GROUP_NAME }}
       azure_admin_group_role: ${{ inputs.azure_admin_group_role || secrets.AZURE_ADMIN_GROUP_ROLE }}
@@ -76,10 +64,9 @@ jobs:
       - name: Create/Use Resource group for Managed Application
         id: create_mapp_rg
         run: |
-          mapp_rg_prefix="${{ inputs.mapp_rg_prefix }}"
           location="${{ inputs.location }}"
           resource_owner="${{ github.actor }}"
-          mapp_rg="${mapp_rg_prefix}-${{ inputs.mapp_suffix_id }}-rg"
+          mapp_rg="${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-rg"
 
           echo "::group::Create Resource Group for Managed Application"
           if ! az group show --name "${mapp_rg}" &>/dev/null; then

@@ -154,26 +154,21 @@ jobs:
     uses: ./.github/workflows/create-managed-app.yaml
     with:
       environment: ${{ inputs.environment }}
-      mapp_rg: ${{ needs.call-create-managed-app-definition.outputs.mapp_rg }}
-      mapp_def_name: ${{ needs.call-create-managed-app-definition.outputs.mapp_def_name }}
-
+      mapp_rg_prefix: mapp
+      mapp_def_prefix: mappdef
+      mapp_suffix_id: ${{ github.run_id }}
       aks_cluster_sizing: ${{ inputs.aks_cluster_sizing }}
       viya_order_sas_uri: ${{ inputs.viya_order_sas_uri }}
       viya_cli_sas_uri: ${{ inputs.viya_cli_sas_uri }}
       viya_admin_password: ${{ inputs.viya_admin_password }}
       ssh_public_key: ${{ inputs.ssh_public_key }}
-
       dns_suffix: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).dns_suffix }}
-
       ext_pg_ids_admin_user: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ext_pg_ids_admin_user }}
       ext_pg_ids_admin_password: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ext_pg_ids_admin_password }}
       ext_pg_cds_admin_user: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ext_pg_cds_admin_user }}
       ext_pg_cds_admin_password: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ext_pg_cds_admin_password }}
-
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
-
       ip_allow_list: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ip_allow_list }}
-      
       step_install_superset_flag: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).step_install_superset_flag }}
       step_update_spec_cirrus_flag: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).step_update_spec_cirrus_flag }}
       step_update_spec_cas_flag: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).step_update_spec_cas_flag }}
@@ -181,8 +176,6 @@ jobs:
       step_add_users: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).step_add_users }}
       step_disable_cas_flag: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).step_disable_cas_flag }}
       step_disable_nonessential_apps_run_time_flag: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).step_disable_nonessential_apps_run_time_flag }}
-      
       tls_cert_b64: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).tls_cert_b64 }}
       tls_key_b64: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).tls_key_b64 }}
       tls_trusted_ca_certs_b64: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).tls_trusted_ca_certs_b64 }}
-      
