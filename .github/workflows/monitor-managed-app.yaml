@@ -17,10 +17,6 @@ on:
         description: 'The prefix for the managed application resource group.'
         required: true
         type: string
-      mapp_def_prefix:
-        description: 'The prefix for the managed application definition.'
-        required: true
-        type: string
       mapp_suffix_id:
         description: 'The suffix ID for the managed application, typically the run ID.'
         required: true
@@ -60,10 +56,10 @@ jobs:
       - name: Wait for Managed Application Deployment
         run: |
           managed_rg="${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg"
-          deployment_name="${{ inputs.mapp_def_prefix }}-${{ inputs.mapp_suffix_id }}"
+          deployment_name="${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-deploy"
           
-          echo "Wait for a specific deployment ${deployment_name}-deploy to exist"
-          az deployment group wait -g ${managed_rg} --name ${deployment_name}-deploy --interval 60 --timeout 900 --exists
+          echo "Wait for a specific deployment resource (${deployment_name}) in ${managed_rg} resource group to exist. This might take a while..."
+          az deployment group wait -g ${managed_rg} --name ${deployment_name} --interval 60 --timeout 900 --exists
 
           echo "Sleep 1 minute before trying to get the list of deployment scripts."
           sleep 60
