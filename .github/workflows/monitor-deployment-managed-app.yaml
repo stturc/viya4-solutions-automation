@@ -122,7 +122,7 @@ jobs:
                               echo "The content of the file $STORAGE_SHARE_FILE is:"
                               cat ./${STORAGE_SHARE_FILE} > newlog.txt
                               echo "The diff between the old and new log files is:"
-                              diff --unified=0 oldlog.txt newlog.txt | grep '^+[^+]' | sed 's/^+//' > diff.txt
+                              diff --unified=0 oldlog.txt newlog.txt | grep -s '^+[^+]' | sed 's/^+//' > diff.txt || true
                               cat diff.txt
                               echo "The diff has been saved to diff.txt"
                               mv newlog.txt oldlog.txt
