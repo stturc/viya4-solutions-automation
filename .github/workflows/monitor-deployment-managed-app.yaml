@@ -116,15 +116,10 @@ jobs:
                           then
                               echo "WARNING - The file $STORAGE_SHARE_FILE does not exist yet in the share $STORAGE_SHARE_NAME." 
                           else
-                              echo "The file $STORAGE_SHARE_FILE exists in the share $STORAGE_SHARE_NAME. Downloading it..."
                               az storage file download --path  ${STORAGE_SHARE_PATH}/${STORAGE_SHARE_FILE}  --account-name ${STORAGE_ACCOUNT_NAME} --share-name ${STORAGE_SHARE_NAME} --account-key ${STORAGE_ACCOUNT_KEY} --subscription ${subscription_id} --dest ./${STORAGE_SHARE_FILE} >/dev/null
-                              echo "The file $STORAGE_SHARE_FILE has been downloaded."
-                              echo "The content of the file $STORAGE_SHARE_FILE is:"
                               cat ./${STORAGE_SHARE_FILE} > newlog.txt
-                              echo "The diff between the old and new log files is:"
                               diff --unified=0 oldlog.txt newlog.txt | grep -s '^+[^+]' | sed 's/^+//' > diff.txt || true
                               cat diff.txt
-                              echo "The diff has been saved to diff.txt"
                               mv newlog.txt oldlog.txt
                           fi
                           echo "sleeping $pollInterval seconds"
