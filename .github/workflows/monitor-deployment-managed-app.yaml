@@ -55,9 +55,9 @@ jobs:
         shell: bash
         env:
           managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}
-          subscription_id: ${{ inputs.subscription_id }}
           pollInterval: ${{ inputs.pollInterval }}
           maxDurationInSeconds: ${{ inputs.maxDurationInSeconds }}
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           DEPLOYMENT_SCRIPTS_JSON=$(az deployment-scripts list -g ${managed_rg} --subscription ${subscription_id})
           DEPLOYMENT_SCRIPTS_JSON_LENGTH=$(echo "$DEPLOYMENT_SCRIPTS_JSON" | jq -r "length")
