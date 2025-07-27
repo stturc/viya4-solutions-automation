@@ -54,7 +54,7 @@ jobs:
         id: poll
         shell: bash
         env:
-          managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}
+          managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg
           pollInterval: ${{ inputs.pollInterval }}
           maxDurationInSeconds: ${{ inputs.maxDurationInSeconds }}
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
