@@ -1,0 +1,83 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Monitor Managed Application
+run-name: monitor-managed-app
+
+on:
+  workflow_call:
+    inputs:
+      #Required inputs
+      environment:
+        description: 'The environment to deploy the managed application to.'
+        required: true
+        type: string
+      mapp_rg_prefix:
+        description: 'The prefix for the managed application resource group.'
+        required: true
+        type: string
+      mapp_def_prefix:
+        description: 'The prefix for the managed application definition.'
+        required: true
+        type: string
+      mapp_suffix_id:
+        description: 'The suffix ID for the managed application, typically the run ID.'
+        required: true
+        type: string
+      pollInterval:
+        description: 'The interval in seconds to poll the managed application status.'
+        required: false
+        type: string
+        default: 30
+      maxDurationInSeconds:
+        description: 'The maximum duration in seconds to wait for the managed application to be created.'
+        required: false
+        type: string
+        default: 10000
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  monitor-managed-app:
+    name: create-managed-app
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Wait for Managed Application Deployment
+        run: |
+          managed_rg="mapp-${{ github.run_id }}-${{ matrix.id }}-mrg"
+          deployment_name="mappdef-${{ github.run_id }}-${{ matrix.id }}"
+          
+          echo "Wait for a specific deployment ${deployment_name}-deploy to exist"
+          az deployment group wait -g ${managed_rg} --name ${deployment_name}-deploy --interval 60 --timeout 900 --exists
+
+          echo "Sleep 1 minute before trying to get the list of deployment scripts."
+          sleep 60
+
+      - name: Monitor Azure deployment
+        id: monitor
+        uses: ./.github/actions/poll-managed-app
+        with:
+          mapp_rg_prefix: mapp
+          mapp_suffix_id: ${{ github.run_id }}-${{ matrix.id }}
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          pollInterval: 30
+          maxDurationInSeconds: 10000
+
+      - name: Print result
+        run: |
+          echo "Final deployment status: ${{ steps.monitor.outputs.status }}"
