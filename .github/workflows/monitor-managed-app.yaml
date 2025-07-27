@@ -43,9 +43,6 @@ jobs:
     environment: ${{ inputs.environment }}
       
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Log in to Azure
         uses: azure/login@v2
         with:
@@ -103,15 +100,15 @@ jobs:
           pollInterval: 30
           maxDurationInSeconds: 10000
 
-      - name: Monitor Azure deployment (repeated)
-        id: monitor2
-        uses: ./.github/actions/poll-managed-app
-        with:
-          mapp_rg_prefix: mapp
-          mapp_suffix_id: ${{ github.run_id }}-${{ matrix.id }}
-          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          pollInterval: 30
-          maxDurationInSeconds: 10000
+      # - name: Monitor Azure deployment (repeated)
+      #   id: monitor2
+      #   uses: ./.github/actions/poll-managed-app
+      #   with:
+      #     mapp_rg_prefix: mapp
+      #     mapp_suffix_id: ${{ github.run_id }}-${{ matrix.id }}
+      #     subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      #     pollInterval: 30
+      #     maxDurationInSeconds: 10000
       
       - name: Print result
         run: |
