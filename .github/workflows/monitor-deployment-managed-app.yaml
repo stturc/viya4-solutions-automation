@@ -1,0 +1,143 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Monitor Deployment Managed Application
+run-name: monitor-deployment-managed-app
+
+on:
+  workflow_call:
+    inputs:
+      #Required inputs
+      environment:
+        description: 'The environment to deploy the managed application to.'
+        required: true
+        type: string
+      mapp_rg_prefix:
+        description: 'The prefix for the managed application resource group.'
+        required: true
+        type: string
+      mapp_suffix_id:
+        description: 'The suffix ID for the managed application, typically the run ID.'
+        required: true
+        type: string
+      pollInterval:
+        description: 'The interval in seconds to poll the managed application status.'
+        required: false
+        type: string
+        default: 30
+      maxDurationInSeconds:
+        description: 'The maximum duration in seconds to wait for the managed application to be created.'
+        required: false
+        type: string
+        default: 10000
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  monitor-deployment-managed-app:
+    name: monitor-deployment-managed-app
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+      
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Poll loop
+        id: poll
+        shell: bash
+        env:
+          managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}
+          subscription_id: ${{ inputs.subscription_id }}
+          pollInterval: ${{ inputs.pollInterval }}
+          maxDurationInSeconds: ${{ inputs.maxDurationInSeconds }}
+        run: |
+          DEPLOYMENT_SCRIPTS_JSON=$(az deployment-scripts list -g ${managed_rg} --subscription ${subscription_id})
+          DEPLOYMENT_SCRIPTS_JSON_LENGTH=$(echo "$DEPLOYMENT_SCRIPTS_JSON" | jq -r "length")
+
+          for ix_tmp in $(seq 1 $DEPLOYMENT_SCRIPTS_JSON_LENGTH)     
+          do
+              ix=$((ix_tmp-1))
+              DEPLOYMENT_SCRIPT_JSON=$(echo "$DEPLOYMENT_SCRIPTS_JSON" | jq -r ".[$ix]")
+              DEPLOYMENT_SCRIPT_NAME=$(echo "$DEPLOYMENT_SCRIPT_JSON" | jq -r ".name")
+
+              echo 
+              echo "********************************************"
+              echo "Monitoring status of deployment script $DEPLOYMENT_SCRIPT_NAME"
+              echo "********************************************"
+
+              rm -f oldlog.txt
+              touch oldlog.txt
+              
+              start_datetime=$(date +%s)
+              while true
+              do
+                  if [ "$(date +%s)" -gt "$(($start_datetime + ${maxDurationInSeconds}))" ]
+                  then
+                      echo "ERROR - It takes too much time to complete the managed app execution. Aborting..." 
+                      echo "⏰ Timeout reached"
+                      echo "status=TIMEOUT" >> "$GITHUB_OUTPUT"
+                      exit 1
+                  fi
+                  
+                  #We need to get the updated version of the JSON
+                  DEPLOYMENT_SCRIPTS_JSON=$(az deployment-scripts list -g ${managed_rg} --subscription ${subscription_id})
+                  DEPLOYMENT_SCRIPT_JSON=$(echo "$DEPLOYMENT_SCRIPTS_JSON" | jq -r ".[$ix]")
+                  DEPLOYMENT_SCRIPT_PROVISIONINGSTATE=$(echo "$DEPLOYMENT_SCRIPT_JSON" | jq -r ".provisioningState")
+                  DEPLOYMENT_SCRIPT_NAME=$(echo "$DEPLOYMENT_SCRIPT_JSON" | jq -r ".name")
+                  DEPLOYMENT_SCRIPT_STATUS_ERROR=$(echo "$DEPLOYMENT_SCRIPT_JSON" | jq -r ".status.error")
+                  DEPLOYMENT_SCRIPT_STATUS_ENDTIME=$(echo "$DEPLOYMENT_SCRIPT_JSON" | jq -r ".status.endTime")
+                  
+                  if [ "$DEPLOYMENT_SCRIPT_PROVISIONINGSTATE" == "Failed" ]
+                  then
+                      echo "ERROR - An error occured with the deployment $DEPLOYMENT_SCRIPT_NAME. Aborting..."
+                      echo "❌ Deployment failed"
+                      echo "status=FAILED" >> "$GITHUB_OUTPUT"
+                      exit 1
+                  else
+                      if [ "$DEPLOYMENT_SCRIPT_STATUS_ENDTIME" == "null" ]
+                      then
+                          DEPLOYMENT_SCRIPT_STATUS_STORAGE_ACCOUNT_ID=$(echo "$DEPLOYMENT_SCRIPT_JSON" | jq -r ".status.storageAccountId")
+                          STORAGE_ACCOUNT_NAME=$(echo $DEPLOYMENT_SCRIPT_STATUS_STORAGE_ACCOUNT_ID | perl -p -e "s/\/subscriptions\/${subscription_id}\/resourceGroups\/${managed_rg}\/providers\/Microsoft.Storage\/storageAccounts\/(.*)/\1/")
+                          STORAGE_ACCOUNT_KEY=$(az storage account keys list --resource-group $managed_rg --account-name $STORAGE_ACCOUNT_NAME --subscription ${subscription_id} --query "[0].value" -o tsv)
+                          STORAGE_SHARE_NAME=$(az storage share list --account-name "${STORAGE_ACCOUNT_NAME}" --account-key "${STORAGE_ACCOUNT_KEY}" --subscription ${subscription_id} | jq -r ".[0].name")
+                          STORAGE_SHARE_PATH="azscriptoutput"
+                          STORAGE_SHARE_FILE=$(az storage file list --account-name "${STORAGE_ACCOUNT_NAME}" --share-name ${STORAGE_SHARE_NAME} --account-key "${STORAGE_ACCOUNT_KEY}" --subscription ${subscription_id} --path ${STORAGE_SHARE_PATH} | jq -r ".[0].name")
+                          if [ -z "STORAGE_SHARE_FILE" ] || [ "$STORAGE_SHARE_FILE" == "null" ]
+                          then
+                              echo "WARNING - The file $STORAGE_SHARE_FILE does not exist yet in the share $STORAGE_SHARE_NAME." 
+                          else
+                              az storage file download --path  ${STORAGE_SHARE_PATH}/${STORAGE_SHARE_FILE}  --account-name ${STORAGE_ACCOUNT_NAME} --share-name ${STORAGE_SHARE_NAME} --account-key ${STORAGE_ACCOUNT_KEY} --subscription ${subscription_id} --dest ./${STORAGE_SHARE_FILE} >/dev/null
+                              cat ./${STORAGE_SHARE_FILE} > newlog.txt
+
+                              diff --unified=0 oldlog.txt newlog.txt | grep '^+[^+]' | sed 's/^+//' > diff.txt
+                              cat diff.txt
+                              mv newlog.txt oldlog.txt
+                          fi
+                          echo "sleeping $pollInterval seconds"
+                          sleep $pollInterval  
+                      elif [ "$(date +%s)" -gt "$(date -d $DEPLOYMENT_SCRIPT_STATUS_ENDTIME +%s)" ]
+                      then 
+                          echo "The script execution has completed."
+                          break
+                      else
+                          echo "sleeping $pollInterval seconds"
+                          sleep $pollInterval
+                      fi
+                  fi
+              done
+          done
+
+          echo "The managed application has been successfully deployed."
+          echo "✅ Deployment succeeded"
+          echo "status=SUCCEEDED" >> "$GITHUB_OUTPUT"
+        
+
+

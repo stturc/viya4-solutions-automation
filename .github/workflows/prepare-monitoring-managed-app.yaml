@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-name: (RW) Monitor Managed Application
-run-name: monitor-managed-app
+name: (RW) Prepare Monitoring Managed Application
+run-name: prepare-monitoring-managed-app
 
 on:
   workflow_call:
@@ -37,8 +37,8 @@ permissions:
   contents: read
 
 jobs:
-  monitor-managed-app:
-    name: create-managed-app
+  prepare-monitoring-managed-app:
+    name: prepare-monitoring-managed-app
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
       
@@ -89,27 +89,3 @@ jobs:
                   break
               fi
           done
-
-      - name: Monitor Azure deployment
-        id: monitor1
-        uses: ./.github/actions/poll-managed-app
-        with:
-          mapp_rg_prefix: mapp
-          mapp_suffix_id: ${{ github.run_id }}-${{ matrix.id }}
-          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          pollInterval: 30
-          maxDurationInSeconds: 10000
-
-      # - name: Monitor Azure deployment (repeated)
-      #   id: monitor2
-      #   uses: ./.github/actions/poll-managed-app
-      #   with:
-      #     mapp_rg_prefix: mapp
-      #     mapp_suffix_id: ${{ github.run_id }}-${{ matrix.id }}
-      #     subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      #     pollInterval: 30
-      #     maxDurationInSeconds: 10000
-      
-      - name: Print result
-        run: |
-          echo "Final deployment status: ${{ steps.monitor.outputs.status }}"
