@@ -55,8 +55,8 @@ jobs:
 
       - name: Wait for Managed Application Deployment
         env: 
-          managed_rg:"${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg"
-          deployment_name:"${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-deploy"
+          managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg
+          deployment_name: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-deploy
         shell: bash
         run: |
           echo "Wait for a specific deployment resource (${deployment_name}) in ${managed_rg} resource group to exist. This might take a while..."
