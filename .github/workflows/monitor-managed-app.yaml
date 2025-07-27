@@ -59,8 +59,8 @@ jobs:
 
       - name: Wait for Managed Application Deployment
         run: |
-          managed_rg="mapp-${{ github.run_id }}-${{ matrix.id }}-mrg"
-          deployment_name="mappdef-${{ github.run_id }}-${{ matrix.id }}"
+          managed_rg="${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg"
+          deployment_name="${{ inputs.mapp_def_prefix }}-${{ inputs.mapp_suffix_id }}"
           
           echo "Wait for a specific deployment ${deployment_name}-deploy to exist"
           az deployment group wait -g ${managed_rg} --name ${deployment_name}-deploy --interval 60 --timeout 900 --exists
