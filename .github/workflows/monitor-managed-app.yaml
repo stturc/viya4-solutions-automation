@@ -54,18 +54,47 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Wait for Managed Application Deployment
+        env: 
+          managed_rg:"${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg"
+          deployment_name:"${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-deploy"
+        shell: bash
         run: |
-          managed_rg="${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg"
-          deployment_name="${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-deploy"
-          
           echo "Wait for a specific deployment resource (${deployment_name}) in ${managed_rg} resource group to exist. This might take a while..."
           az deployment group wait -g ${managed_rg} --name ${deployment_name} --interval 60 --timeout 900 --exists
 
           echo "Sleep 1 minute before trying to get the list of deployment scripts."
           sleep 60
 
+      - name: Check deployment scripts existence
+        env: 
+          managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          pollInterval: ${{ inputs.pollInterval }}
+          maxDurationInSeconds: 240
+        shell: bash
+        run: |
+          start_datetime=$(date +%s)
+          while true
+          do
+              if [ "$(date +%s)" -gt "$(($start_datetime + ${maxDurationInSeconds}))" ]
+              then
+                  echo "⏰ Timeout reached"
+                  echo "status=TIMEOUT" >> "$GITHUB_OUTPUT"
+                  exit 1
+              fi
+
+              echo "[$(date)] Checking for deployment scripts in resource group: $managed_rg"
+              if ! az deployment-scripts list -g ${managed_rg} --subscription ${subscription_id} > /dev/null
+              then
+                  echo "Sleep $pollInterval seconds"
+                  sleep $pollInterval
+              else
+                  break
+              fi
+          done
+
       - name: Monitor Azure deployment
-        id: monitor
+        id: monitor1
         uses: ./.github/actions/poll-managed-app
         with:
           mapp_rg_prefix: mapp
@@ -74,6 +103,16 @@ jobs:
           pollInterval: 30
           maxDurationInSeconds: 10000
 
+      - name: Monitor Azure deployment (repeated)
+        id: monitor2
+        uses: ./.github/actions/poll-managed-app
+        with:
+          mapp_rg_prefix: mapp
+          mapp_suffix_id: ${{ github.run_id }}-${{ matrix.id }}
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          pollInterval: 30
+          maxDurationInSeconds: 10000
+      
       - name: Print result
         run: |
           echo "Final deployment status: ${{ steps.monitor.outputs.status }}"
