@@ -79,6 +79,7 @@ jobs:
               start_datetime=$(date +%s)
               while true
               do
+                  echo "Checking status of deployment script $DEPLOYMENT_SCRIPT_NAME"
                   if [ "$(date +%s)" -gt "$(($start_datetime + ${maxDurationInSeconds}))" ]
                   then
                       echo "ERROR - It takes too much time to complete the managed app execution. Aborting..." 
@@ -104,6 +105,7 @@ jobs:
                   else
                       if [ "$DEPLOYMENT_SCRIPT_STATUS_ENDTIME" == "null" ]
                       then
+                          echo "The script $DEPLOYMENT_SCRIPT_NAME is still running."
                           DEPLOYMENT_SCRIPT_STATUS_STORAGE_ACCOUNT_ID=$(echo "$DEPLOYMENT_SCRIPT_JSON" | jq -r ".status.storageAccountId")
                           STORAGE_ACCOUNT_NAME=$(echo $DEPLOYMENT_SCRIPT_STATUS_STORAGE_ACCOUNT_ID | perl -p -e "s/\/subscriptions\/${subscription_id}\/resourceGroups\/${managed_rg}\/providers\/Microsoft.Storage\/storageAccounts\/(.*)/\1/")
                           STORAGE_ACCOUNT_KEY=$(az storage account keys list --resource-group $managed_rg --account-name $STORAGE_ACCOUNT_NAME --subscription ${subscription_id} --query "[0].value" -o tsv)
@@ -114,11 +116,15 @@ jobs:
                           then
                               echo "WARNING - The file $STORAGE_SHARE_FILE does not exist yet in the share $STORAGE_SHARE_NAME." 
                           else
+                              echo "The file $STORAGE_SHARE_FILE exists in the share $STORAGE_SHARE_NAME. Downloading it..."
                               az storage file download --path  ${STORAGE_SHARE_PATH}/${STORAGE_SHARE_FILE}  --account-name ${STORAGE_ACCOUNT_NAME} --share-name ${STORAGE_SHARE_NAME} --account-key ${STORAGE_ACCOUNT_KEY} --subscription ${subscription_id} --dest ./${STORAGE_SHARE_FILE} >/dev/null
+                              echo "The file $STORAGE_SHARE_FILE has been downloaded."
+                              echo "The content of the file $STORAGE_SHARE_FILE is:"
                               cat ./${STORAGE_SHARE_FILE} > newlog.txt
-
+                              echo "The diff between the old and new log files is:"
                               diff --unified=0 oldlog.txt newlog.txt | grep '^+[^+]' | sed 's/^+//' > diff.txt
                               cat diff.txt
+                              echo "The diff has been saved to diff.txt"
                               mv newlog.txt oldlog.txt
                           fi
                           echo "sleeping $pollInterval seconds"
