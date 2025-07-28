@@ -34,8 +34,8 @@ on:
     outputs:
       status:
         description: 'The status of the managed application deployment.'
-        value: ${{ steps.monitor-deployment.outputs.status }}
-        
+        value: ${{ jobs.monitor-deployment-managed-app.outputs.status }}
+
 permissions:
   id-token: write
   contents: read
