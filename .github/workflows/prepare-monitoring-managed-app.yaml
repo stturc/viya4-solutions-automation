@@ -10,7 +10,7 @@ on:
     inputs:
       #Required inputs
       environment:
-        description: 'The environment to deploy the managed application to.'
+        description: 'The environment the managed application has been deployed to.'
         required: true
         type: string
       mapp_rg_prefix:
@@ -26,11 +26,11 @@ on:
         required: false
         type: string
         default: 30
-      maxDurationInSeconds:
-        description: 'The maximum duration in seconds to wait for the managed application to be created.'
+      timeoutInSecondsDeploymentScripts:
+        description: 'The timeout in seconds for the deployment scripts to be created.'
         required: false
         type: string
-        default: 10000
+        default: 900
 
 permissions:
   id-token: write
@@ -54,22 +54,18 @@ jobs:
         env: 
           managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg
           deployment_name: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-deploy
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          pollInterval: ${{ inputs.pollInterval }}
+          timeoutInSecondsDeploymentScripts: ${{ inputs.timeoutInSecondsDeploymentScripts }}
         shell: bash
         run: |
           echo "Wait for a specific deployment resource (${deployment_name}) in ${managed_rg} resource group to exist. This might take a while..."
-          az deployment group wait -g ${managed_rg} --name ${deployment_name} --interval 60 --timeout 900 --exists
+          az deployment group wait -g ${managed_rg} --name ${deployment_name} --interval $pollInterval --timeout $timeoutInSecondsDeploymentScripts --exists
 
-          echo "Sleep 1 minute before trying to get the list of deployment scripts."
+          echo "Sleep 1 minute before checking the existence of deployment scripts."
           sleep 60
 
-      - name: Check deployment scripts existence
-        env: 
-          managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg
-          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          pollInterval: ${{ inputs.pollInterval }}
-          maxDurationInSeconds: 240
-        shell: bash
-        run: |
+          maxDurationInSeconds=240
           start_datetime=$(date +%s)
           while true
           do
@@ -89,3 +85,4 @@ jobs:
                   break
               fi
           done
+
