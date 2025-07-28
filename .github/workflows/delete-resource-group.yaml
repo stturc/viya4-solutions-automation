@@ -20,6 +20,11 @@ on:
         description: 'Managed Application Suffix ID'
         required: true
         type: string
+      condition:
+        description: 'Condition to determine if the resource group should be deleted'
+        required: true
+        type: boolean
+        
 
 permissions:
   id-token: write
@@ -34,6 +39,7 @@ jobs:
     steps:
       - name: Log in to Azure
         uses: azure/login@v2
+        if: ${{ inputs.condition }}
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -41,6 +47,7 @@ jobs:
 
       - name: Delete Resource Group 
         id: delete-resource-group
+        if: ${{ inputs.condition }}
         env:
           mapp_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-rg
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
