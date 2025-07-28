@@ -31,7 +31,11 @@ on:
         required: false
         type: string
         default: 10000
-
+    outputs:
+      status:
+        description: 'The status of the managed application deployment.'
+        value: ${{ steps.monitor-deployment.outputs.status }}
+        
 permissions:
   id-token: write
   contents: read
@@ -41,7 +45,9 @@ jobs:
     name: monitor-deployment-managed-app
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-      
+
+    outputs:
+      status: ${{ steps.monitor-deployment.outputs.status }}  
     steps:
       - name: Azure Login
         uses: azure/login@v2
@@ -50,8 +56,8 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Poll loop
-        id: poll
+      - name: Monitor Deployment
+        id: monitor-deployment
         shell: bash
         env:
           managed_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-mrg
