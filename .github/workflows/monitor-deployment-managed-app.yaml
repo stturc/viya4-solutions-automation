@@ -35,6 +35,12 @@ on:
       status:
         description: 'The status of the managed application deployment.'
         value: ${{ jobs.monitor-deployment-managed-app.outputs.status }}
+      LB_IP:
+        description: 'The load balancer IP address of the managed application.'
+        value: ${{ jobs.monitor-deployment-managed-app.outputs.LB_IP }}
+      K8S_API_FQDN:
+        description: 'The Kubernetes API FQDN of the managed application.'
+        value: ${{ jobs.monitor-deployment-managed-app.outputs.K8S_API_FQDN }}
 
 permissions:
   id-token: write
@@ -47,7 +53,9 @@ jobs:
     environment: ${{ inputs.environment }}
 
     outputs:
-      status: ${{ steps.monitor-deployment.outputs.status }}  
+      status: ${{ steps.monitor-deployment.outputs.status }}
+      LB_IP: ${{ steps.monitor-deployment.outputs.LB_IP }}
+      K8S_API_FQDN: ${{ steps.monitor-deployment.outputs.K8S_API_FQDN }}
     steps:
       - name: Azure Login
         uses: azure/login@v2
@@ -85,7 +93,7 @@ jobs:
               start_datetime=$(date +%s)
               while true
               do
-                  echo "Checking status of deployment script $DEPLOYMENT_SCRIPT_NAME"
+                  
                   if [ "$(date +%s)" -gt "$(($start_datetime + ${maxDurationInSeconds}))" ]
                   then
                       echo "ERROR - It takes too much time to complete the managed app execution. Aborting..." 
@@ -125,6 +133,12 @@ jobs:
                               az storage file download --path  ${STORAGE_SHARE_PATH}/${STORAGE_SHARE_FILE}  --account-name ${STORAGE_ACCOUNT_NAME} --share-name ${STORAGE_SHARE_NAME} --account-key ${STORAGE_ACCOUNT_KEY} --subscription ${subscription_id} --dest ./${STORAGE_SHARE_FILE} >/dev/null
                               cat ./${STORAGE_SHARE_FILE} > newlog.txt
                               diff --unified=0 oldlog.txt newlog.txt | grep -s '^+[^+]' | sed 's/^+//' > diff.txt || true
+                              diff --unified=0 oldlog.txt newlog.txt \
+                                | grep '^+[^+]' \
+                                | sed 's/^+//' \
+                                | grep -v '^Alive\[' \
+                                | grep -v '^Finished\[' \
+                                > diff.txt || true
                               cat diff.txt
                               mv newlog.txt oldlog.txt
                           fi
@@ -142,9 +156,37 @@ jobs:
               done
           done
 
+
+          echo "Retrieve the load balancer IP address."
+          MC_RG=$(az aks show --resource-group ${managed_rg} --name ${managed_rg/-mrg/-aks} --query nodeResourceGroup --output tsv --subscription $subscription_id)
+          LB_IP=$(az network public-ip list --resource-group $MC_RG --query "[?contains(name, 'kubernetes')].ipAddress" --output tsv --subscription $subscription_id)
+          if [ -z "$LB_IP" ] || [ "$LB_IP" == "null" ]
+          then
+              echo "ERROR - The load balancer IP address could not be retrieved. Aborting..."
+              echo "❌ Deployment failed"
+              echo "status=FAILED" >> "$GITHUB_OUTPUT"
+              exit 1
+          fi
+          echo "Load balancer IP address: $LB_IP"
+          echo "LB_IP=$LB_IP" >> $GITHUB_OUTPUT
+
+          echo "Retrieve the K8S API FQDN."
+          K8S_API_FQDN=$(az aks show --resource-group ${managed_rg} --name ${managed_rg/-mrg/-aks} --query "fqdn" --output tsv --subscription $subscription_id)
+
+          if [ -z "$K8S_API_FQDN" ] || [ "$K8S_API_FQDN" == "null" ]
+          then
+              echo "ERROR - The K8S API FQDN address could not be retrieved. Aborting..."
+              echo "❌ Deployment failed"
+              echo "status=FAILED" >> "$GITHUB_OUTPUT"
+              exit 1
+          fi 
+          echo "K8S API FQDN: $K8S_API_FQDN"
+          echo "K8S_API_FQDN=$K8S_API_FQDN" >> $GITHUB_OUTPUT
+
+
           echo "The managed application has been successfully deployed."
           echo "✅ Deployment succeeded"
           echo "status=SUCCEEDED" >> "$GITHUB_OUTPUT"
-        
+          
 
 

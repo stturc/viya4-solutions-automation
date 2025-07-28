@@ -1,0 +1,51 @@
+# Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: (RW) Delete Resource group
+run-name: delete-resource-group
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+      mapp_rg_prefix:
+        description: 'Managed Application Resource Group Prefix'
+        required: true
+        type: string
+      mapp_suffix_id:
+        description: 'Managed Application Suffix ID'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  delete-resource-group:
+    name: delete-resource-group
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Delete Resource Group 
+        id: delete-resource-group
+        env:
+          mapp_rg: ${{ inputs.mapp_rg_prefix }}-${{ inputs.mapp_suffix_id }}-rg
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          echo "::group::Delete Resource Group"
+          az group delete --name ${mapp_rg} --subscription ${subscription_id} --yes --no-wait
+          echo "Resource group ${mapp_rg} deletion initiated."
+          echo "::endgroup::"
