@@ -22,7 +22,6 @@ on:
           - 'ProdSmall'
           - 'ProdMedium'
           - 'ProdLarge'
-          - 'RDSmall'
       viya_order_sas_uri:
         description: 'SAS URI for Viya Order'
         required: true

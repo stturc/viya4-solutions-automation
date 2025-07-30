@@ -59,7 +59,7 @@ jobs:
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           # source the downloaded artifact - it should contain the status variable
-          source monitor-${{ matrix.id }}
+          source ${{ inputs.monitor_artifact_name }}
           
           echo "::group::Deleting Resource Group"
           if [ "${status^^}" == "SUCCEEDED" ] && [ "${{ inputs.delete_if_succeeded }}" == "true" ]
