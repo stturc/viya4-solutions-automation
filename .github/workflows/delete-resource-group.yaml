@@ -64,7 +64,7 @@ jobs:
           echo "::group::Deleting Resource Group"
           if [ "${status^^}" == "SUCCEEDED" ] && [ "${{ inputs.delete_if_succeeded }}" == "true" ]
           then
-            echo "Resource group ${mapp_rg} deletion initiated. Status: ${status} - delete_if_succeeded: ${{ inputs.delete_if_succeeded }}
+            echo "Resource group ${mapp_rg} deletion initiated. Status: ${status} - delete_if_succeeded: ${{ inputs.delete_if_succeeded }}"
             az group delete --name ${mapp_rg} --subscription ${subscription_id} --yes --no-wait
             echo "Resource group ${mapp_rg} deletion initiated."
           else
