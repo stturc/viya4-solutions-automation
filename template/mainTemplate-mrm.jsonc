@@ -675,101 +675,13 @@
                "[resourceId('Microsoft.Authorization/roleAssignments', variables('rgContributorRoleDefinitionName'))]"
            ]
         },
-        {
-           "condition": "[greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0)]",
-           "copy": {
-             "name": "extPgConfigLoop",
-             "count": "[length(variables('aksSizing')[parameters('aksSizing')].extPgConfig)]",
-             "mode": "serial" 
-           },
-           "name": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].DeploymentName]",
-           "type": "Microsoft.Resources/deployments",
-           "apiVersion": "2021-04-01",
-           "dependsOn": [
-               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
-               "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]",
-               "[resourceId('Microsoft.Authorization/roleAssignments', variables('rgContributorRoleDefinitionName'))]"
-           ],
-           "properties": {
-               "mode": "Incremental",
-               "templateLink": {
-                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/pgExt.json', parameters('_artifactsLocationSasToken')))]"
-               },
-               "parameters": {
-                   "_artifactsLocation": {"value": "[parameters('_artifactsLocation')]"},
-                   "_artifactsLocationSasToken": {"value": "[parameters('_artifactsLocationSasToken')]"},
-                   "vnetName": {"value": "[variables('vnetName')]"},
-                   "serverName": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].ServerName]"},
-                   "location": {"value": "[resourceGroup().location]"},
-                   "administratorLogin": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].AdministratorLogin]"},
-                   "administratorLoginPassword": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].AdministratorLoginPassword]"},
-                   "serverEdition": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].ServerEdition]"},
-                   "skuSizeGB": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].SkuSizeGB]"},
-                   "dbInstanceType": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].DbInstanceType]"},
-                   "haMode": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].HaMode]"},
-                   "availabilityZone": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].AvailabilityZone]"},
-                   "version": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].Version]"},
-                   "identityName": {"value": "[variables('identityName')]"},
-                   "azCliVersion": {"value": "[variables('azCliVersion')]"},
-                   "subnetCIDR": {"value": "[variables('aksSizing')[parameters('aksSizing')].extPgConfig[copyIndex()].SubnetCIDR]"}
-               }
-           }
-        },
-        {
-           "name": "[variables('aksDeploymentName')]",
-           "type": "Microsoft.Resources/deployments",
-           "apiVersion": "2021-04-01",
-           "dependsOn": [
-               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
-               "[resourceId('Microsoft.Resources/deploymentScripts', variables('kubernetesVersionScriptName'))]"
-           ],
-           "properties": {
-               "mode": "Incremental",
-               "templateLink": {
-                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaAks.json', parameters('_artifactsLocationSasToken')))]"
-               },
-               "parameters": {
-                   "location": {"value": "[parameters('location')]"},
-                   "aksName": {"value": "[variables('aksName')]"},
-                   "kubernetesVersion": {"value": "[reference(variables('kubernetesVersionScriptName'), '2020-10-01').outputs.kubernetesVersion]"},
-                   "subnetId": {"value": "[reference(variables('vnetDeploymentName')).outputs.aksSubnetId.value]"},
-                   "nodeTopology": { "value": "[variables('aksSizing')[parameters('aksSizing')].nodeTopology]" },
-                   "casConfig": { "value": "[variables('casConfig')]" },
-                   "computeConfig": { "value": "[variables('computeConfig')]" },
-                   "statefulConfig": { "value": "[variables('statefulConfig')]" },
-                   "statelessConfig": { "value": "[variables('statelessConfig')]" },
-                   "managementConfig": { "value": "[variables('managementConfig')]" },
-                   "defaultConfig": { "value": "[variables('defaultConfig')]" },
-                   "backupConfig": { "value": "[variables('backupConfig')]" }
-               }
-           }
-        },
-        {
-           "type": "Microsoft.Authorization/roleAssignments",
-           "apiVersion": "2022-01-01-preview",
-           "name": "[variables('aksClusterUserRoleDefinitionName')]",
-           "dependsOn": [
-               "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]",
-               "[resourceId('Microsoft.Resources/deployments', variables('aksDeploymentName'))]"
-           ],
-           "scope": "[concat('Microsoft.ContainerService/managedClusters', '/', variables('aksName'))]",
-           "properties": {
-               "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('aksClusterUserRoleId'))]",
-               "principalId": "[reference(variables('identityName')).principalId]",
-               "delegatedManagedIdentityResourceId": "[json('null')]",
-               "principalType": "ServicePrincipal"
-           }
-        },
+
         {
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
            "name": "[variables('viyaDeployDeploymentName')]",
            "dependsOn": [
-               "[resourceId('Microsoft.Resources/deployments', variables('aksDeploymentName'))]",
-               "[resourceId('Microsoft.Resources/deployments', variables('jumpDeploymentName'))]",
-               "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]",
-               "[resourceId('Microsoft.Resources/deploymentScripts', variables('keypairGeneratorScriptName'))]",
-               "extPgConfigLoop"
+               "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]"
            ],
            "properties": {
                "mode": "Incremental",
