@@ -150,7 +150,8 @@ jobs:
             --account-key "${storage_account_key}" \
             --container-name "${storage_account_container_name}" \
             --name "${{ inputs.artifact_file_name }}" \
-            --file "${{ inputs.artifact_file_name }}"
+            --file "${{ inputs.artifact_file_name }}" \
+            --overwrite
 
           expiry_date=$(date -u -d "+3 hours" '+%Y-%m-%dT%H:%MZ')
 
