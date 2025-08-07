@@ -121,6 +121,8 @@ LOGFILE="${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/viyaDeploy_$(date +"%Y%m%d%H%M%S").
 echolog "STARTING Viya solution deployment script ..."
 echolog
 
+echolog "STEPHEN TESTING"
+
 # Constants
 RETRY_BACKOFF=30
 EXT_CLIENT_ID=ext.api.cli
