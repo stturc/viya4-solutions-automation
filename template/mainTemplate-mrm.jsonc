@@ -625,9 +625,82 @@
                "principalType": "ServicePrincipal"
            }
         },
+        {
+           "name": "[variables('vnetDeploymentName')]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaVnet.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "vnetName": {
+                       "value": "[variables('vnetName')]"
+                   },
+                   "aksSubnetName": {
+                       "value": "[variables('aksSubnetName')]"
+                   },
+                   "miscSubnetName": {
+                       "value": "[variables('miscSubnetName')]"
+                   },
+                   "vnetAddressPrefix": {
+                       "value": "[parameters('vnetAddressPrefix')]"
+                   },
+                   "aksSubnetPrefix": {
+                       "value": "[parameters('aksSubnetPrefix')]"
+                   },
+                   "miscSubnetPrefix": {
+                       "value": "[parameters('miscSubnetPrefix')]"
+                   },
+                   "virtualNetworkNewOrExisting": {
+                       "value": "[parameters('virtualNetworkNewOrExisting')]"
+                   }
+               }
+           }
+        },
 
-
-
+        {
+           "name": "[variables('nsgDeploymentName')]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaNsg.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "vnetName": {
+                       "value": "[variables('vnetName')]"
+                   },
+                   "miscSubnetName": {
+                       "value": "[variables('miscSubnetName')]"
+                   },
+                   "miscSubnetPrefix": {
+                       "value": "[parameters('miscSubnetPrefix')]"
+                   },
+                   "ipAllowlist": {
+                       "value": "[parameters('ipAllowlist')]"
+                   }
+               }
+           }
+        },
         {
            "type": "Microsoft.Storage/storageAccounts",
            "apiVersion": "2022-05-01",
@@ -649,7 +722,132 @@
                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
            ]
         },
-
+        {
+           "type": "Microsoft.Resources/deploymentScripts",
+           "apiVersion": "2020-10-01",
+           "name": "[variables('keypairGeneratorScriptName')]",
+           "location": "[parameters('location')]",
+           "kind": "AzureCLI",
+           "identity": {
+               "type": "UserAssigned",
+               "userAssignedIdentities": {
+                   "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": {}
+               }
+           },
+           "properties": {
+               "forceUpdateTag": "[parameters('utcValue')]",
+               "azCliVersion": "[variables('azCliVersion')]",
+               "arguments": "",
+               "environmentVariables": [
+                   {
+                       "name": "SUBSCRIPTION_ID",
+                       "value": "[subscription().subscriptionId]"
+                   },
+                   {
+                       "name": "RG",
+                       "value": "[resourceGroup().name]"
+                   },
+                   {
+                       "name": "STORAGE_ACCOUNT",
+                       "value": "[variables('storageAccountName')]"
+                   },
+                   {
+                       "name": "STORAGE_ACCOUNT_CONTAINER",
+                       "value": "[variables('storageAccountContainerName')]"
+                   }
+               ],
+               "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('viyaGenerateSshKeypair.sh', parameters('_artifactsLocationSasToken')))]",
+               "timeout": "PT30M",
+               "cleanupPreference": "[parameters('keypairGeneratorScriptContainerCleanupPreference')]",
+               "retentionInterval": "P1D"
+           },
+           "dependsOn": [
+               "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]",
+               "[resourceId('Microsoft.Authorization/roleAssignments', variables('rgContributorRoleDefinitionName'))]"
+           ]
+        },
+        {
+           "name": "[variables('nfsDeploymentName')]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
+               "[resourceId('Microsoft.Resources/deployments', variables('nsgDeploymentName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaNfs.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "adminUser": {
+                       "value": "[variables('nfsVmAdminUser')]"
+                   },
+                   "subnetId": {
+                       "value": "[reference(variables('vnetDeploymentName')).outputs.miscSubnetId.value]"
+                   },
+                   "subnetPrefix": {
+                       "value": "[parameters('miscSubnetPrefix')]"
+                   },
+                   "aksSubnetPrefix": {
+                       "value": "[parameters('aksSubnetPrefix')]"
+                   },
+                   "viyaSshPublicKey": {
+                       "value": "[reference(variables('keypairGeneratorScriptName')).outputs.publicKey]"
+                   },
+                   "userSshPublicKey": {
+                       "value": "[parameters('userSshPublicKey')]"
+                   }
+               }
+           }
+        },
+        {
+           "name": "[variables('jumpDeploymentName')]",
+           "type": "Microsoft.Resources/deployments",
+           "apiVersion": "2021-04-01",
+           "dependsOn": [
+               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
+               "[resourceId('Microsoft.Resources/deployments', variables('nfsDeploymentName'))]"
+           ],
+           "properties": {
+               "mode": "Incremental",
+               "templateLink": {
+                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaJump.json', parameters('_artifactsLocationSasToken')))]"
+               },
+               "parameters": {
+                   "location": {
+                       "value": "[parameters('location')]"
+                   },
+                   "deploymentName": {
+                       "value": "[parameters('deploymentName')]"
+                   },
+                   "adminUser": {
+                       "value": "[variables('jumpVmAdminUser')]"
+                   },
+                   "subnetId": {
+                       "value": "[reference(variables('vnetDeploymentName')).outputs.miscSubnetId.value]"
+                   },
+                   "rwxFilestoreEndpoint": {
+                       "value": "[reference(variables('nfsDeploymentName')).outputs.privateIp.value]"
+                   },
+                   "rwxFilestorePath": {
+                       "value": "[variables('v4CfgRwxFilestorePath')]"
+                   },
+                   "rwxViyaPath": {
+                       "value": "[variables('v4CfgNamespace')]"
+                   },
+                   "userSshPublicKey": {
+                       "value": "[parameters('userSshPublicKey')]"
+                   }
+               }
+           }
+        },
         {
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
