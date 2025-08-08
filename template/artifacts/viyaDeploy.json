@@ -121,10 +121,6 @@
         "viyaOrderSASURI": {
             "type": "string",
             "defaultValue": ""
-        },
-        "viyaCLISASURI": {
-            "type": "string",
-            "defaultValue": ""
         }
     },
     "variables": {
@@ -279,10 +275,6 @@
                     {
                         "name": "VIYA_ORDER_SAS_URI",
                         "value": "[parameters('viyaOrderSASURI')]"
-                    },
-                    {
-                        "name": "VIYA_CLI_SAS_URI",
-                        "value": "[parameters('viyaCLISASURI')]"
                     }
                 ],
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('viyaDeploy.sh', parameters('_artifactsLocationSasToken')))]",

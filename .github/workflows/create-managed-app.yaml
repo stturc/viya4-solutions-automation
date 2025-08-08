@@ -37,10 +37,6 @@ on:
         description: 'SAS URI for Viya Order'
         required: true
         type: string
-      viya_cli_sas_uri:
-        description: 'SAS URI for Viya CLI'
-        required: true
-        type: string
       ip_allow_list:
         description: 'IP Allow List'
         required: true
@@ -161,7 +157,6 @@ jobs:
           mapp_def_name="${{ inputs.mapp_def_prefix }}-${{ inputs.mapp_suffix_id }}"
           aks_cluster_sizing=${{ inputs.aks_cluster_sizing }}
           viya_order_sas_uri="${{ inputs.viya_order_sas_uri }}"
-          viya_cli_sas_uri="${{ inputs.viya_cli_sas_uri }}"
           ip_allow_list=${{ inputs.ip_allow_list }}
           viya_admin_password=${{ inputs.viya_admin_password }}
           step_install_superset_flag=${{ inputs.step_install_superset_flag }}
@@ -182,7 +177,6 @@ jobs:
           echo "  mapp_def_name: $mapp_def_name"
           echo "  aks_cluster_sizing: $aks_cluster_sizing"
           echo "  viya_order_sas_uri: $viya_order_sas_uri"
-          echo "  viya_cli_sas_uri: $viya_cli_sas_uri"
           echo "  ip_allow_list: $ip_allow_list"
           echo "  viya_admin_password: [REDACTED]"
           echo "  step_install_superset_flag: $step_install_superset_flag"
@@ -234,7 +228,6 @@ jobs:
           mapp_json=$(jq -n \
             --arg ipAllowlist "${ip_allow_list}" \
             --arg viyaOrderSASURI "${viya_order_sas_uri}" \
-            --arg viyaCLISASURI "${viya_cli_sas_uri}" \
             --arg location "${location}"\
             --arg deploymentPrefix "${deployment_prefix}"\
             --arg deploymentDnsSuffix "${deployment_dns_suffix}"\
@@ -262,7 +255,6 @@ jobs:
               deploymentPrefix: {value: $deploymentPrefix},
               deploymentDnsSuffix: {value: $deploymentDnsSuffix},
               viyaOrderSASURI: {value: $viyaOrderSASURI},
-              viyaCLISASURI: {value: $viyaCLISASURI},
               aksSizing:{value:$aksSizing},
               viyaAdminPassword: {value: $viyaAdminPassword},
               userSshPublicKey: {value: $userSshPublicKey},

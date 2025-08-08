@@ -1188,87 +1188,112 @@ function loadCirrusData {
   then
     echolog "[loadCirrusData] NOTE: Starting to load Cirrus data"
 
-    echolog "[loadCirrusData] Create pod for sas-viya-cli tool"
-    SAS_VIYA_CLI_POD_NAME=sas-viya-cli
-    kubectl run "${SAS_VIYA_CLI_POD_NAME}" \
-      --image=alpine:latest \
-      --restart=Never \
-      --namespace=${V4_CFG_NAMESPACE} \
-      --command -- sleep 3600
-
-    echolog "[loadCirrusData] Wait for pod to be ready"
-    kubectl wait --for=condition=ready pod -n $V4_CFG_NAMESPACE $SAS_VIYA_CLI_POD_NAME
-
-    echolog "[loadCirrusData] Copy viya CLI to pod"
-    kubectl cp $HOME/viya4-manifests/tools/sas-viya ${V4_CFG_NAMESPACE}/${SAS_VIYA_CLI_POD_NAME}:/tmp/sas-viya
-
-    echolog "[loadCirrusData] Run few necessary commands"
-    # to fix issue: Error relocating /tmp/sas-viya-cli/sas-viya: __res_search: symbol not found
-    kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} -- apk add --no-cache gcompat
-
-    # to fix issue: Error loading shared library libresolv.so.2: No such file or directory (needed by /tmp/sas-viya-cli/sas-viya)
-    kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} -- ln -s /lib/libc.so.6 /usr/lib/libresolv.so.2
-
-    echolog "[loadCirrusData] Show sas-viya-cli tool version"
-    kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} --  /tmp/sas-viya --version
-
-    echolog "[loadCirrusData] Connect sas-viya-cli tool to environment"
-    profileName=tmp
-
-    kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} --  /tmp/sas-viya -k --profile ${profileName} profile set-endpoint https://sas-logon-app.sas-viya.svc.cluster.local
-    kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} --  /tmp/sas-viya -k --profile ${profileName} profile set-output json 
-    kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} --  /tmp/sas-viya -k --profile ${profileName} profile toggle-color y
-    kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} --  /tmp/sas-viya -k --profile ${profileName} auth login --user "viya_admin" --password "${VIYA_ADMIN_PASSWORD}" 
-
     for cirrus_solution in ${CIRRUS_SOLUTIONS[@]}
     do
       case $cirrus_solution in
         sas-risk-cirrus-mrm)
 
           FILE_NAME="Load_Live_Data.sas"
-          
-          echolog "[loadCirrusData] Get access token"
-          sas_logon_pod=$(kubectl get pods -n ${V4_CFG_NAMESPACE} -l app=sas-logon-app | grep sas-logon-app | awk '{print $1}')
-          CONSUL_TOKEN=$(kubectl exec -n ${V4_CFG_NAMESPACE} ${sas_logon_pod} -c sas-logon-app -- bash -c "echo \$CONSUL_TOKEN")
-          
-          ACCESS_TOKEN=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- \
-            curl -k -s -L -X POST "https://sas-logon-app.${V4_CFG_NAMESPACE}.svc.cluster.local/SASLogon/oauth/clients/consul?callback=false&serviceId=app" -H "X-Consul-Token: $CONSUL_TOKEN" | jq -r ".access_token")
 
+          echolog "[loadCirrusData] Get bearer token"
+          sas_logon_pod=$(kubectl get pods -n ${V4_CFG_NAMESPACE} -l app=sas-logon-app | grep sas-logon-app | awk '{print $1}')
+          
+          export BEARER_TOKEN=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- \
+            curl -sk -X POST "https://sas-logon-app.${V4_CFG_NAMESPACE}.svc.cluster.local/SASLogon/oauth/token" \
+              -u "sas.cli:" \
+              -H "Content-Type: application/x-www-form-urlencoded" \
+              -d "grant_type=password&username=viya_admin&password=${VIYA_ADMIN_PASSWORD}" | awk -F: '{print $2}'|awk -F\" '{print $2}')
+          
+          echo "BEARER_TOKEN: $BEARER_TOKEN"
 
           echolog "[loadCirrusData] Get content of file $FILE_NAME"      
-          FILE_ID=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- curl -k -s -L -X GET "https://sas-files.${V4_CFG_NAMESPACE}.svc.cluster.local/files/files?limit=100" --header 'Accept: application/json, application/vnd.sas.api+json' --header "Authorization: Bearer $ACCESS_TOKEN" | jq -r ".items[] | select (.name == \"$FILE_NAME\").id")
-          
+          FILE_ID=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- curl -k -s -L -X GET "https://sas-files.${V4_CFG_NAMESPACE}.svc.cluster.local/files/files?limit=100" --header 'Accept: application/json, application/vnd.sas.api+json' --header "Authorization: Bearer $BEARER_TOKEN" | jq -r ".items[] | select (.name == \"$FILE_NAME\").id")
           echolog "[loadCirrusData] File ID is $FILE_ID"
 
           echolog "[loadCirrusData] Get file content"
-
-          kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- curl -k -s --request GET \
+          SAS_FILE_CONTENT=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- curl -k -s --request GET \
             --url https://sas-files.${V4_CFG_NAMESPACE}.svc.cluster.local/files/files/${FILE_ID}/content \
             --header 'Accept: application/json, application/vnd.sas.file+json, application/vnd.sas.file+json;version=1, application/vnd.sas.file+json;version=2, application/vnd.sas.file+json;version=3, application/vnd.sas.file+json;version=4, application/vnd.sas.error+json' \
-            --header "Authorization: Bearer $ACCESS_TOKEN" > FILE_CONTENT.sas
+            --header "Authorization: Bearer $BEARER_TOKEN")
+          echolog "[loadCirrusData] File content is $(tr -d '\n' <<< "$SAS_FILE_CONTENT")"
+          ESCAPED_CODE=$(jq -Rs . <<< "$SAS_FILE_CONTENT")
 
-          echolog "[loadCirrusData] File content (oneliner) is $(tr -d '\n' < FILE_CONTENT.sas)"
+          echolog "[loadCirrusData] Create job definition to run SAS file"
+          JOB_DEF_ID=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- \
+            curl -sk -X POST "https://sas-job-definitions.${V4_CFG_NAMESPACE}.svc.cluster.local/jobDefinitions/definitions" \
+              -H "Authorization: Bearer $BEARER_TOKEN" \
+              -H "Content-Type: application/vnd.sas.job.definition+json" \
+              -d "{
+                \"name\": \"Job Definition $FILE_NAME $(date +%s)\",
+                \"description\": \"Compute job that runs the $FILE_NAME SAS file via _program argument\",
+                \"type\": \"Compute\",
+                \"codeType\": \"SAS\",
+                \"createdBy\": \"viya_admin\",
+                \"code\": $ESCAPED_CODE
+              }" | jq -r '.id')
+          echolog "[loadCirrusData] Job Definition ID is $JOB_DEF_ID"
 
-          echolog "[loadCirrusData]copy file to sas-viya-cli pod"
-          kubectl cp FILE_CONTENT.sas ${V4_CFG_NAMESPACE}/${SAS_VIYA_CLI_POD_NAME}:/tmp/FILE_CONTENT.sas
+          echolog "[loadCirrusData] Create job execution to run SAS file"
+          JOB_EXEC_ID=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- \
+            curl -sk -X POST "https://sas-job-execution.${V4_CFG_NAMESPACE}.svc.cluster.local/jobExecution/jobs" \
+              -H "Authorization: Bearer $BEARER_TOKEN" \
+              -H "Content-Type: application/vnd.sas.job.execution.job.request+json" \
+              -d "{
+                \"name\": \"Job execution $FILE_NAME $(date +%s)\",
+                \"jobDefinitionUri\": \"/jobDefinitions/definitions/$JOB_DEF_ID\",
+                \"arguments\": {
+                  \"_contextName\": \"SAS Job Execution compute context\"
+                }                
+              }" | jq -r '.id')
+          echolog "[loadCirrusData] Job Execution ID is $JOB_EXEC_ID"
 
-          echolog "[loadCirrusData] Install batch plugin"
-          kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} --  /tmp/sas-viya -k --profile ${profileName} plugins install --repo SAS batch
+
+          TIMEOUT=7200  # in seconds
+          INTERVAL=5  # retry interval in seconds
+          START_TIME=$(date +%s)
+
+          while true; do
+            STATUS=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- \
+                              curl -sk -X GET "https://sas-job-execution.${V4_CFG_NAMESPACE}.svc.cluster.local/jobExecution/jobs/$JOB_EXEC_ID" \
+                                -H "Authorization: Bearer $BEARER_TOKEN" | jq -r '.state')
+            echolog "[loadCirrusData] Job status: $STATUS"
           
-          echolog "[loadCirrusData] Create results folder"
-          kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} -- mkdir -p /tmp/FILE_CONTENT
+            if [[ "$STATUS" == "completed" ]]; then
+              echolog "[loadCirrusData] Job completed successfully. Proceeding to retrieve log content..."
+              break
+            elif [[ "$STATUS" == "failed" ]] || [[ "$STATUS" == "null" ]]; then
+              echolog "[loadCirrusData] Job failed. Aborting..."
+              exit 1
+            fi
           
-          echolog "[loadCirrusData] Execute $FILE_NAME (batch job)"
-          kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} -- /tmp/sas-viya -k --profile ${profileName} profile set-endpoint https://sas-batch.sas-viya.svc.cluster.local
-          kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} -- /tmp/sas-viya -k --profile ${profileName} batch jobs submit-pgm --pgm-path /tmp/FILE_CONTENT.sas --context default  --wait-results --results-dir /tmp/FILE_CONTENT/
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            
+            if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
+              echolog "[loadCirrusData] Timeout reached: $TIMEOUT seconds. Exiting..."
+              exit 1
+            fi
           
-          echolog ""
+            echolog "[loadCirrusData] Retrying in $INTERVAL seconds..."
+            sleep $INTERVAL
+          done
+
+          echolog "[loadCirrusData] Job completed successfully. Retrieving log content"
+          LOG_LOCATION_ID=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- \
+                        curl -sk -X GET "https://sas-job-execution.${V4_CFG_NAMESPACE}.svc.cluster.local/jobExecution/jobs/$JOB_EXEC_ID" \
+                          -H "Authorization: Bearer $BEARER_TOKEN" | jq -r '.logLocation')
+
+          echolog "[loadCirrusData] Log location ID is $LOG_LOCATION_ID"
+
+          SAS_LOG_CONTENT=$(kubectl -n ${V4_CFG_NAMESPACE} exec ${sas_logon_pod} -c sas-logon-app -- \
+            curl -k -s --request GET \
+              --url https://sas-files.${V4_CFG_NAMESPACE}.svc.cluster.local${LOG_LOCATION_ID}/content \
+              --header 'Accept: application/json, application/vnd.sas.file+json, application/vnd.sas.file+json;version=1, application/vnd.sas.file+json;version=2, application/vnd.sas.file+json;version=3, application/vnd.sas.file+json;version=4, application/vnd.sas.error+json' \
+              --header "Authorization: Bearer $BEARER_TOKEN" | jq -r ".items[].line")
+
           echolog "[loadCirrusData] Log content is:"
-          kubectl exec -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME} -- sh -c 'cat /tmp/FILE_CONTENT/JOB*/FILE_CONTENT.log' > FILE_CONTENT.log
-          echolog "$(tr -d '\n' < FILE_CONTENT.log)"
+          echolog "$SAS_LOG_CONTENT"
 
-          echolog "[loadCirrusData] Delete sas-viya-cli pod"
-          kubectl delete pod -n ${V4_CFG_NAMESPACE} ${SAS_VIYA_CLI_POD_NAME}
         ;;
       esac
     done
@@ -2205,20 +2230,6 @@ then
   echolog "V4_CFG_CADENCE_MONTH=${V4_CFG_CADENCE_MONTH}"
 else
   echolog "No Blob storage URL for SAS Viya Order was provided. Aborting..."
-  exit 1
-fi
-
-echolog "---"
-if [ -n "${VIYA_CLI_SAS_URI}" ]
-then
-  echolog "A Blob storage URI has been provided for SAS Viya CLI. Using it for deployment...."
-  curl -s -o /mnt/azscripts/viya-cli.tgz "$VIYA_CLI_SAS_URI"
-  mkdir -p $HOME/viya4-manifests/tools
-  tar -xvzf /mnt/azscripts/viya-cli.tgz -C $HOME/viya4-manifests/tools/
-  chmod +x $HOME/viya4-manifests/tools/sas-viya
-
-else
-  echolog "No Blob storage URL for SAS Viya CLI was provided. Aborting..."
   exit 1
 fi
 

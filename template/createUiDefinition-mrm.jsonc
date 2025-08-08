@@ -85,16 +85,6 @@
                   "required": true
                 },
                 "visible": true
-              },
-              {
-                "name": "viyaCLISASURI",
-                "type": "Microsoft.Common.TextBox",
-                "label": "Viya CLI SAS URL (SAS Token)",
-                "toolTip": "Paste the URL of the .tgz archive containing the SAS Viya CLI. Upload it to a blob storage with a SAS token first.",
-                "constraints": {
-                  "required": true
-                },
-                "visible": true
               }
             ]
           }
@@ -388,7 +378,6 @@
       "deploymentDnsSuffix": "[basics('actionSection').deploymentDnsSuffix]",
       
       "viyaOrderSASURI": "[steps('softwareOrderStep').sasSection.viyaOrderSASURI]",
-      "viyaCLISASURI": "[steps('softwareOrderStep').sasSection.viyaCLISASURI]",
       
       "aksSizing": "[steps('sizingStep').clusterSection.aksSizing]",
       "extPgIDSAdminUser": "[steps('sizingStep').clusterSection.extPgIDSAdminUser]",

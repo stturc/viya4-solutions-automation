@@ -37,9 +37,6 @@
         "viyaOrderSASURI": {
             "type": "string"
         },
-        "viyaCLISASURI": {
-            "type": "string"
-        },
         "aksSizing":{
             "type": "string",
             "allowedValues": [
@@ -1010,8 +1007,7 @@
                    "tlsCertB64": { "value": "[parameters('tlsCertB64')]" }, 
                    "tlsKeyB64": { "value": "[parameters('tlsKeyB64')]" }, 
                    "tlsTrustedCaCertsB64": { "value": "[parameters('tlsTrustedCaCertsB64')]" },
-                   "viyaOrderSASURI": { "value": "[parameters('viyaOrderSASURI')]" },
-                   "viyaCLISASURI": { "value": "[parameters('viyaCLISASURI')]" }
+                   "viyaOrderSASURI": { "value": "[parameters('viyaOrderSASURI')]" }
                }
            }
         }

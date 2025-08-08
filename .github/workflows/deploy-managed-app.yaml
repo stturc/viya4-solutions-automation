@@ -26,10 +26,6 @@ on:
         description: 'SAS URI for Viya Order'
         required: true
         type: string
-      viya_cli_sas_uri:
-        description: 'SAS URI for Viya CLI'
-        required: true
-        type: string
       viya_admin_password:
         description: 'Viya Admin Password'
         required: true
@@ -158,7 +154,6 @@ jobs:
       mapp_suffix_id: ${{ github.run_id }}
       aks_cluster_sizing: ${{ inputs.aks_cluster_sizing }}
       viya_order_sas_uri: ${{ inputs.viya_order_sas_uri }}
-      viya_cli_sas_uri: ${{ inputs.viya_cli_sas_uri }}
       viya_admin_password: ${{ inputs.viya_admin_password }}
       ssh_public_key: ${{ inputs.ssh_public_key }}
       dns_suffix: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).dns_suffix }}
