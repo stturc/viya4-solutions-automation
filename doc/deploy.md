@@ -7,7 +7,6 @@ This repository contains the artifacts necessary to deploy a SAS solution to a s
 - [Manual Deployment](/doc/deploy-manual.md)
 - [Automated Deployment via GitHub Actions](/doc/deploy-automated.md)
 - [SAS Solution Order Notes](/doc/sas-solution-order.md)
-- [SAS Viya CLI Notes](/doc/sas-viya-cli.md)
 - [Access Environment](/doc/access.md)
 - [Environment Sizing](/doc/environment-sizing.md)
 - [SSO Configuration with Microsoft Entra ID](/doc/sso-entra-id.md)

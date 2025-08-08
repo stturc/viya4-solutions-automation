@@ -36,7 +36,6 @@
 | `SAS solution to deploy`   | The specific SAS solution to deploy. This must match a solution present in the supported combinations table.                                 | `SAS Model Risk Management`              | Yes      |
 | `AKS Cluster Sizing`            | The sizing preset for the Azure Kubernetes Service (AKS) cluster. Determines node sizes and counts for the deployment.                            | `ProdSmall`, `ProdMedium`, `ProdLarge`   | Yes      |
 | `SAS URI for Viya Order`        | The URL to a ZIP file containing your SAS solution assets, license, and certificates (see [Note about SAS solution order](/doc/sas-solution-order.md) for more details). Must match the solution and cadence you are deploying.        | `https://<your-storage-account>/order.zip` | Yes      |
-| `SAS URI for SAS Viya CLI`      | The URL to a TGZ file containing the SAS Viya CLI for Linux binary (See [Note about SAS Viya CLI](/doc/sas-viya-cli.md) for more details).                                     | `https://<your-storage-account>/viya-cli.tgz` | Yes      |
 | `Viya Admin Password`           | The password for the admin user of the Viya deployment.                                                     | `S3cureP@ssw0rdW1thNumb3rsAndSymb0ls`   | Yes      |
 | `SSH Public Key for the deployment`           | SSH Public Key (OpenSSH format) to access the jumpbox client                                                                      | `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ...`   | Yes      |
 | `Environment to deploy to`      | The target environment for deployment.                                                                     | The value you set as 'environment name'  | Yes      |
@@ -48,7 +47,6 @@ The following screenshot shows the GitHub Actions workflow UI for deploying the 
 * SAS solution to deploy
 * AKS Cluster Sizing
 * SAS URI for Viya Order
-* SAS URI for SAS Viya CLI
 * Viya Admin Password
 * SSH Public Key for the deployment
 * Environment to deploy to

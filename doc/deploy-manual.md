@@ -116,9 +116,7 @@ Assumptions:
    6. Click **Next**.
 4. **Software Order ID** tab:
    1. Select "Supply ZIP file URL (SAS Token)" in the **Choose input method** dropdown.
-   2. Enter:
-      1. **Viya Order SAS URI (SAS Token)**: URL to a ZIP file containing your SAS solution assets, license, and certificates. See [Note about SAS solution order](/doc/sas-solution-order.md) for more details.
-      2. **Viya CLI SAS URI (SAS Token)**: URL to a TGZ file containing the SAS Viya CLI for Linux. See [Note about SAS Viya CLI](/doc/sas-viya-cli.md) for more details.
+   2. For **Viya Order SAS URI (SAS Token)**, enter the URL to a ZIP file containing your SAS solution assets, license, and certificates. See [Note about SAS solution order](/doc/sas-solution-order.md) for more details.
    3. Click **Next**.
 5. **Sizing** tab:
    1. Choose the desired sizing for your deployment.
