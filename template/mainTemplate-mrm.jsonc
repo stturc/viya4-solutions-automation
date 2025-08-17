@@ -95,7 +95,7 @@
                 "new",
                 "existing"
             ],
-            "defaultValue": "existing"
+            "defaultValue": "new"
         },
         "viyaV4dVersion": {
             "type": "string",
