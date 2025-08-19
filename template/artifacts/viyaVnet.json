@@ -89,9 +89,25 @@
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Enabled"
                         }
-                    }
+                    },
+			        {
+			            "name": "extpg",
+			            "properties": {
+			                "addressPrefix": "192.168.3.0/28",
+			                "delegations": [
+			                    {
+			                        "name": "Microsoft.DBforPostgreSQL.flexibleServers",
+			                        "properties": {
+			                            "serviceName": "Microsoft.DBforPostgreSQL/flexibleServers",
+			                            "actions": [
+			                                "Microsoft.Network/virtualNetworks/subnets/join/action"
+			                            ]
+			                        }
+			                    }
+			                ]
+			            }
+			        }         
                 ]
-
             }
         }
     ],
