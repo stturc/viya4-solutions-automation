@@ -286,23 +286,5 @@
                 ]
             }
         }
-    ],
-    "outputs": {
-        "v4CasIp": {
-            "type": "string",
-            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4CasIp]"
-        },
-        "v4CaCertificateBase64": {
-            "type": "string",
-            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4CaCertificateBase64]"
-        },
-        "v4CfgCadence": {
-            "type": "string",
-            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4CfgCadence]"
-        },
-        "v4IngressIp": {
-            "type": "string",
-            "value": "[reference(variables('viyaDeployScriptName')).outputs.v4IngressIp]"
-        }
-    }
+    ]
 }
