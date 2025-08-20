@@ -186,7 +186,12 @@
                     "adminUsername": "[parameters('adminUser')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
-
+                        "ssh": {
+                            "publicKeys": [
+                                "[variables('viyaSshPublicKey')]",
+                                "[variables('userSshPublicKey')]"
+                            ]
+                        },
                         "provisionVMAgent": true,
                         "patchSettings": {
                             "patchMode": "ImageDefault",
