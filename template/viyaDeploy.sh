@@ -377,7 +377,7 @@ function unzipViya4Manifests {
 
 # Create Viya namespace
 function createViyaNamespace {
-  kubectl create ns ${V4_CFG_NAMESPACE} >>$LOGFILE 2>&1
+  kubectl get ns ${V4_CFG_NAMESPACE} || kubectl create ns ${V4_CFG_NAMESPACE} >>$LOGFILE 2>&1
 }
 
 # Apply Viya manifests
