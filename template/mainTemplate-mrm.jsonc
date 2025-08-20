@@ -805,47 +805,6 @@
            }
         },
         {
-           "name": "[variables('jumpDeploymentName')]",
-           "type": "Microsoft.Resources/deployments",
-           "apiVersion": "2021-04-01",
-           "dependsOn": [
-               "[resourceId('Microsoft.Resources/deployments', variables('vnetDeploymentName'))]",
-               "[resourceId('Microsoft.Resources/deployments', variables('nfsDeploymentName'))]"
-           ],
-           "properties": {
-               "mode": "Incremental",
-               "templateLink": {
-                   "uri": "[uri(parameters('_artifactsLocation'), concat('artifacts/viyaJump.json', parameters('_artifactsLocationSasToken')))]"
-               },
-               "parameters": {
-                   "location": {
-                       "value": "[parameters('location')]"
-                   },
-                   "deploymentName": {
-                       "value": "[parameters('deploymentName')]"
-                   },
-                   "adminUser": {
-                       "value": "[variables('jumpVmAdminUser')]"
-                   },
-                   "subnetId": {
-                       "value": "[reference(variables('vnetDeploymentName')).outputs.miscSubnetId.value]"
-                   },
-                   "rwxFilestoreEndpoint": {
-                       "value": "[reference(variables('nfsDeploymentName')).outputs.privateIp.value]"
-                   },
-                   "rwxFilestorePath": {
-                       "value": "[variables('v4CfgRwxFilestorePath')]"
-                   },
-                   "rwxViyaPath": {
-                       "value": "[variables('v4CfgNamespace')]"
-                   },
-                   "userSshPublicKey": {
-                       "value": "[parameters('userSshPublicKey')]"
-                   }
-               }
-           }
-        },
-        {
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
            "name": "[variables('kubernetesVersionScriptName')]",
@@ -961,7 +920,6 @@
            "name": "[variables('viyaDeployDeploymentName')]",
            "dependsOn": [
                "[resourceId('Microsoft.Resources/deployments', variables('aksDeploymentName'))]",
-               "[resourceId('Microsoft.Resources/deployments', variables('jumpDeploymentName'))]",
                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('storageAccountContainerName'))]",
                "[resourceId('Microsoft.Resources/deploymentScripts', variables('keypairGeneratorScriptName'))]",
                "extPgConfigLoop"
@@ -994,7 +952,7 @@
                    "storageAccountName": { "value": "[variables('storageAccountName')]" }, 
                    "storageAccountContainerName": { "value": "[variables('storageAccountContainerName')]" }, 
                    "viyaAdminPassword": { "value": "[parameters('viyaAdminPassword')]" }, 
-                   "jumpVmIp": { "value": "[reference(variables('jumpDeploymentName')).outputs.publicIp.value]" }, 
+                   "jumpVmIp": { "value": "40.85.191.125" }, 
                    "deployScriptContainerCleanupPreference": { "value": "[parameters('deployScriptContainerCleanupPreference')]" }, 
                    "stepInstallSupersetFlag": { "value": "[parameters('stepInstallSupersetFlag')]" }, 
                    "stepUpdateSpecCirrusDeploymentsFlag": { "value": "[parameters('stepUpdateSpecCirrusDeploymentsFlag')]" }, 
@@ -1020,7 +978,7 @@
         },
         "sasViyaJumpIp": {
            "type": "string",
-           "value": "[reference(variables('jumpDeploymentName')).outputs.publicIp.value]"
+           "value": "40.85.191.125"
         },
         "sasViyaCaCertificateBase64": {
            "type": "string",
