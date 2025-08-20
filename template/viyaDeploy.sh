@@ -2164,7 +2164,7 @@ wait_for_fn_with_str_result getStorageAccountKey STORAGE_ACCOUNT_KEY
 wait_for_fn_result downloadNfsVmPrivateKey
 
 # Create Viya namespace
-#wait_for_fn_result createViyaNamespace
+wait_for_fn_result createViyaNamespace
 
 # Download kustomize tool
 wait_for_fn_result downloadKustomize
