@@ -206,7 +206,7 @@
         "nfsDeploymentName": "[concat(deployment().name,'-nfs')]",
         "keypairGeneratorScriptName": "[concat(parameters('deploymentName'),'-ds-keypair-gen')]",
         "kubernetesVersionScriptName": "[concat(parameters('deploymentName'),'-ds-k8s-version')]",
-        "viyaDeployDeploymentName": "[concat(deployment().name,'-deploy')]",
+        "viyaDeployDeploymentName": "[concat(deployment().name,'-deploy1')]",
         "aksName": "[concat(parameters('deploymentName'), '-aks')]",
         "deploymentFqdn": "[if(equals(parameters('deploymentDnsSuffix'), 'cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('location'), '.cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('deploymentDnsSuffix')))]",
         "storageAccountName": "[concat(take(replace(parameters('deploymentName'),'-',''),12),take(replace(parameters('guid'),'-',''),12))]",
