@@ -121,6 +121,8 @@ LOGFILE="${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/viyaDeploy_$(date +"%Y%m%d%H%M%S").
 echolog "STARTING Viya solution deployment script ..."
 echolog
 
+echolog "STEPHEN TESTING"
+
 # Constants
 RETRY_BACKOFF=30
 EXT_CLIENT_ID=ext.api.cli
@@ -375,7 +377,7 @@ function unzipViya4Manifests {
 
 # Create Viya namespace
 function createViyaNamespace {
-  kubectl create ns ${V4_CFG_NAMESPACE} >>$LOGFILE 2>&1
+  kubectl get ns ${V4_CFG_NAMESPACE} || kubectl create ns ${V4_CFG_NAMESPACE} >>$LOGFILE 2>&1
 }
 
 # Apply Viya manifests
