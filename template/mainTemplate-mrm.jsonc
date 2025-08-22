@@ -194,7 +194,7 @@
         "appTrialPeriodDays": 14,
         "azCliVersion": "2.37.0",
         "kubernetesMajorVersion": "1.30",
-        "identityName": "[concat(parameters('deploymentName')]",
+        "identityName": "[(parameters('deploymentName')]",
         "contributorRoleId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "rgContributorRoleDefinitionName": "[guid(concat(variables('identityName'), '-ra-rg-contributor'))]",
         "aksClusterUserRoleId": "4abbcc35-e782-43d8-92c5-2d3f1bd2253f",
