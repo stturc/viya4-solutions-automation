@@ -152,12 +152,6 @@
                     "adminUsername": "[parameters('adminUser')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
-                        "ssh": {
-                            "publicKeys": [
-                                "[variables('userSshPublicKey')]"
-                            ]
-                        },
-
                         "provisionVMAgent": true,
                         "patchSettings": {
                             "patchMode": "ImageDefault",
@@ -186,16 +180,5 @@
                 "extensionsTimeBudget": "PT1H30M"
             }
         }
-    ],
-    "outputs": {
-        "privateIp": {
-            "type": "string",
-            "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))).ipConfigurations[0].properties.privateIPAddress]"
-        },
-        "publicIp": {
-            "type": "string",
-            "value": "[reference(variables('publicIpName')).ipAddress]"
-        }
-
-    }
+    ]
 }
