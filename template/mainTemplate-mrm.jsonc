@@ -667,6 +667,7 @@
         },
 
         {
+           "condition": "[variables('update')]",
            "name": "[variables('nsgDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
