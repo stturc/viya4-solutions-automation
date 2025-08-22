@@ -1021,32 +1021,5 @@
                }
            }
         }
-    ],
-    "outputs": {
-        
-        "sasViyaUrl": {
-            "type": "string",
-            "value": "[variables('deploymentFqdn')]"
-        },
-        "sasViyaJumpIp": {
-           "type": "string",
-           "value": "[reference(variables('jumpDeploymentName')).outputs.publicIp.value]"
-        },
-        "sasViyaCaCertificateBase64": {
-           "type": "string",
-           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CaCertificateBase64.value]"
-        },
-        "sasViyaCadence": {
-           "type": "string",
-           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CfgCadence.value]"
-        },
-        "sasViyaIngressIp": {
-           "type": "string",
-           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4IngressIp.value]"
-        },
-        "kubernetesVersion": {
-           "type": "string",
-           "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]"
-        }
-    }
+    ]
 }
