@@ -587,7 +587,7 @@
         "managementConfig": "[variables('aksSizing')[parameters('aksSizing')].managementConfig]",
         "defaultConfig": "[variables('aksSizing')[parameters('aksSizing')].defaultConfig]",
         "backupConfig": "[variables('aksSizing')[parameters('aksSizing')].backupConfig]",
-        "update": "false"
+        "update": false
     },
     "resources": [
         {
