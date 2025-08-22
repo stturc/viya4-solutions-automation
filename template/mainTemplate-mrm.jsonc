@@ -194,7 +194,7 @@
         "appTrialPeriodDays": 14,
         "azCliVersion": "2.37.0",
         "kubernetesMajorVersion": "1.30",
-        "identityName": "[concat(parameters('deploymentName'), '-id-', substring(parameters('guid'),0,7))]",
+        "identityName": "[parameters('deploymentName')]",
         "contributorRoleId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "rgContributorRoleDefinitionName": "[guid(concat(variables('identityName'), '-ra-rg-contributor'))]",
         "aksClusterUserRoleId": "4abbcc35-e782-43d8-92c5-2d3f1bd2253f",
@@ -206,7 +206,7 @@
         "nfsDeploymentName": "[concat(deployment().name,'-nfs')]",
         "keypairGeneratorScriptName": "[concat(parameters('deploymentName'),'-ds-keypair-gen')]",
         "kubernetesVersionScriptName": "[concat(parameters('deploymentName'),'-ds-k8s-version')]",
-        "viyaDeployDeploymentName": "[concat(deployment().name,'-deploy')]",
+        "viyaDeployDeploymentName": "[concat(deployment().name,'-deploy1')]",
         "aksName": "[concat(parameters('deploymentName'), '-aks')]",
         "deploymentFqdn": "[if(equals(parameters('deploymentDnsSuffix'), 'cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('location'), '.cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('deploymentDnsSuffix')))]",
         "storageAccountName": "[concat(take(replace(parameters('deploymentName'),'-',''),12),take(replace(parameters('guid'),'-',''),12))]",
@@ -586,7 +586,8 @@
         "statelessConfig": "[variables('aksSizing')[parameters('aksSizing')].statelessConfig]",
         "managementConfig": "[variables('aksSizing')[parameters('aksSizing')].managementConfig]",
         "defaultConfig": "[variables('aksSizing')[parameters('aksSizing')].defaultConfig]",
-        "backupConfig": "[variables('aksSizing')[parameters('aksSizing')].backupConfig]"
+        "backupConfig": "[variables('aksSizing')[parameters('aksSizing')].backupConfig]",
+        "update": false
     },
     "resources": [
         {
@@ -623,6 +624,7 @@
            }
         },
         {
+           "condition": "[variables('update')]",
            "name": "[variables('vnetDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -665,6 +667,7 @@
         },
 
         {
+           "condition": "[variables('update')]",
            "name": "[variables('nsgDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -699,6 +702,7 @@
            }
         },
         {
+           "condition": "[variables('update')]",
            "type": "Microsoft.Storage/storageAccounts",
            "apiVersion": "2022-05-01",
            "name": "[variables('storageAccountName')]",
@@ -712,6 +716,7 @@
            }
         },
         {
+           "condition": "[variables('update')]",
            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
            "apiVersion": "2021-06-01",
            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('storageAccountContainerName'))]",
@@ -720,6 +725,7 @@
            ]
         },
         {
+           "condition": "[variables('update')]",
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
            "name": "[variables('keypairGeneratorScriptName')]",
@@ -764,6 +770,7 @@
            ]
         },
         {
+           "condition": "[variables('update')]",
            "name": "[variables('nfsDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -805,6 +812,7 @@
            }
         },
         {
+           "condition": "[variables('update')]",
            "name": "[variables('jumpDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -846,6 +854,7 @@
            }
         },
         {
+           "condition": "[variables('update')]",
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
            "name": "[variables('kubernetesVersionScriptName')]",
@@ -911,6 +920,7 @@
            }
         },
         {
+           "condition": "[variables('update')]",
            "name": "[variables('aksDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -940,6 +950,7 @@
            }
         },
         {
+           "condition": "[variables('update')]",
            "type": "Microsoft.Authorization/roleAssignments",
            "apiVersion": "2022-01-01-preview",
            "name": "[variables('aksClusterUserRoleDefinitionName')]",
