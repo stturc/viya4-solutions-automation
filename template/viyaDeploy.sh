@@ -865,7 +865,7 @@ EOF
 }
 
 function createPgadminNamespace {
-  kubectl create ns pgadmin >>$LOGFILE 2>&1
+  kubectl get ns pgadmin || kubectl create ns pgadmin >>$LOGFILE 2>&1
 }
 
 function getPGCredentials {
@@ -2161,7 +2161,7 @@ wait_for_fn_result getKubeconfig
 wait_for_fn_with_str_result getStorageAccountKey STORAGE_ACCOUNT_KEY
 
 # Download NFS VM Private Key
-wait_for_fn_result downloadNfsVmPrivateKey
+#wait_for_fn_result downloadNfsVmPrivateKey
 
 # Create Viya namespace
 wait_for_fn_result createViyaNamespace

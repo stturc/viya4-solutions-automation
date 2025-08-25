@@ -879,7 +879,7 @@
            ]
         },
         {
-           "condition": "[greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0)]",
+           "condition": "[and(variables('update'),greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0))]",
            "copy": {
              "name": "extPgConfigLoop",
              "count": "[length(variables('aksSizing')[parameters('aksSizing')].extPgConfig)]",
