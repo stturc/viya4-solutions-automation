@@ -2300,7 +2300,7 @@ wait_for_fn_result deploySuperset
 
 
 #Fix Viya Admin
-wait_for_fn_result fixViyaAdmin
+#wait_for_fn_result fixViyaAdmin
 
 # Register Ext Client
 wait_for_fn_with_str_result getAccessToken ACCESS_TOKEN
