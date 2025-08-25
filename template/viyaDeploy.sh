@@ -2300,7 +2300,7 @@ wait_for_fn_result deploySuperset
 
 
 #Fix Viya Admin
-wait_for_fn_result fixViyaAdmin
+#wait_for_fn_result fixViyaAdmin
 
 # Register Ext Client
 wait_for_fn_with_str_result getAccessToken ACCESS_TOKEN
@@ -2309,7 +2309,7 @@ wait_for_fn_result registerExtClient
 
 # Clean up and output for template
 # Delete NFS VM Private Key
-wait_for_fn_result deleteNfsVmPrivateKey
+#wait_for_fn_result deleteNfsVmPrivateKey
 
 # Get Viya Cadence Release, but don't error out if we don't find it.
 getViyaCadenceRelease
