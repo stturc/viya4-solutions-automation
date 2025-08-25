@@ -1677,6 +1677,11 @@ function setStorageAccountDenyDefaultAction {
   az storage account update -g ${RG} -n ${STORAGE_ACCOUNT} --default-action Deny
 }
 
+# Set storage account default action = Allow
+function setStorageAccountAllowDefaultAction {
+  az storage account update -g ${RG} -n ${STORAGE_ACCOUNT} --default-action Allow
+}
+
 # Add allowed ranges to storage account
 function addStorageAccountNetworkRules {
   IFS=, read -ra RANGES <<<"$V4_CFG_LOADBALANCER_SOURCE_RANGES"
@@ -2161,7 +2166,7 @@ wait_for_fn_result getKubeconfig
 wait_for_fn_with_str_result getStorageAccountKey STORAGE_ACCOUNT_KEY
 
 # Download NFS VM Private Key
-wait_for_fn_result downloadNfsVmPrivateKey
+#wait_for_fn_result downloadNfsVmPrivateKey
 
 # Create Viya namespace
 wait_for_fn_result createViyaNamespace
