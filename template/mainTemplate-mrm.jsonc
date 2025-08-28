@@ -624,7 +624,7 @@
            }
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('vnetDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -667,7 +667,7 @@
         },
 
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('nsgDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -702,7 +702,7 @@
            }
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Storage/storageAccounts",
            "apiVersion": "2022-05-01",
            "name": "[variables('storageAccountName')]",
@@ -716,7 +716,7 @@
            }
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
            "apiVersion": "2021-06-01",
            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('storageAccountContainerName'))]",
@@ -725,7 +725,7 @@
            ]
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
            "name": "[variables('keypairGeneratorScriptName')]",
@@ -770,7 +770,7 @@
            ]
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('nfsDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -812,7 +812,7 @@
            }
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('jumpDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -879,7 +879,7 @@
            ]
         },
         {
-           "condition": "[and(not(variables('isUpdate'),greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0))]",
+           "condition": "[and(not(variables('isUpdate')),greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0))]",
            "copy": {
              "name": "extPgConfigLoop",
              "count": "[length(variables('aksSizing')[parameters('aksSizing')].extPgConfig)]",
@@ -919,7 +919,7 @@
            }
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('aksDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -949,7 +949,7 @@
            }
         },
         {
-           "condition": "[not(variables('isUpdate')]",
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Authorization/roleAssignments",
            "apiVersion": "2022-01-01-preview",
            "name": "[variables('aksClusterUserRoleDefinitionName')]",
@@ -1000,7 +1000,7 @@
                    "appPlanName": { "value": "[variables('appPlanName')]" }, 
                    "appTrialPeriodDays": { "value": "[variables('appTrialPeriodDays')]" }, 
                    "nfsVmAdminUser": { "value": "[variables('nfsVmAdminUser')]" }, 
-                   "nfsVmIp": { "value": "192.168.2.4" }, 
+                   "nfsVmIp": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', [concat(variables('nfsDeploymentName')),'-nic']).ipConfigurations[0].properties.privateIPAddress]"}, 
                    "storageAccountName": { "value": "[variables('storageAccountName')]" }, 
                    "storageAccountContainerName": { "value": "[variables('storageAccountContainerName')]" }, 
                    "viyaAdminPassword": { "value": "[parameters('viyaAdminPassword')]" }, 
