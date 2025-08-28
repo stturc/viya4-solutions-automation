@@ -1000,7 +1000,7 @@
                    "appPlanName": { "value": "[variables('appPlanName')]" }, 
                    "appTrialPeriodDays": { "value": "[variables('appTrialPeriodDays')]" }, 
                    "nfsVmAdminUser": { "value": "[variables('nfsVmAdminUser')]" }, 
-                   "nfsVmIp": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-3-nfs-nic'),'2021-04-01`).ipConfigurations[0].properties.privateIPAddress]"}, 
+                   "nfsVmIp": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-3-nfs-nic'),'2021-04-01').ipConfigurations[0].properties.privateIPAddress]"}, 
                    "storageAccountName": { "value": "[variables('storageAccountName')]" }, 
                    "storageAccountContainerName": { "value": "[variables('storageAccountContainerName')]" }, 
                    "viyaAdminPassword": { "value": "[parameters('viyaAdminPassword')]" }, 
