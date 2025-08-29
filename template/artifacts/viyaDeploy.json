@@ -118,6 +118,10 @@
             "type": "string",
             "defaultValue": ""
         },
+        "isUpdate": {
+            "type": "boolean",
+            "defaultValue": "false"
+        },
         "viyaOrderSASURI": {
             "type": "string",
             "defaultValue": ""
@@ -271,6 +275,10 @@
                     {
                         "name": "TLS_TRUSTED_CA_CERTS_B64",
                         "value": "[parameters('tlsTrustedCaCertsB64')]"
+                    },
+                    {
+                        "name": "IS_UPDATE",
+                        "value": "[parameters('isUpdate')]"
                     },
                     {
                         "name": "VIYA_ORDER_SAS_URI",
