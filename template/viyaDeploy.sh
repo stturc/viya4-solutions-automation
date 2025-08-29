@@ -121,6 +121,8 @@ LOGFILE="${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/viyaDeploy_$(date +"%Y%m%d%H%M%S").
 echolog "STARTING Viya solution deployment script ..."
 echolog
 
+echolog "STEPHEN TESTING"
+
 # Constants
 RETRY_BACKOFF=30
 EXT_CLIENT_ID=ext.api.cli
@@ -375,7 +377,7 @@ function unzipViya4Manifests {
 
 # Create Viya namespace
 function createViyaNamespace {
-  kubectl create ns ${V4_CFG_NAMESPACE} >>$LOGFILE 2>&1
+  kubectl get ns ${V4_CFG_NAMESPACE} || kubectl create ns ${V4_CFG_NAMESPACE} >>$LOGFILE 2>&1
 }
 
 # Apply Viya manifests
@@ -863,7 +865,7 @@ EOF
 }
 
 function createPgadminNamespace {
-  kubectl create ns pgadmin >>$LOGFILE 2>&1
+  kubectl get ns pgadmin || kubectl create ns pgadmin >>$LOGFILE 2>&1
 }
 
 function getPGCredentials {
@@ -2159,7 +2161,10 @@ wait_for_fn_result getKubeconfig
 wait_for_fn_with_str_result getStorageAccountKey STORAGE_ACCOUNT_KEY
 
 # Download NFS VM Private Key
+if [ ! "${IS_UPDATE}" ]
+then
 wait_for_fn_result downloadNfsVmPrivateKey
+fi
 
 # Create Viya namespace
 wait_for_fn_result createViyaNamespace
@@ -2307,7 +2312,10 @@ wait_for_fn_result registerExtClient
 
 # Clean up and output for template
 # Delete NFS VM Private Key
+if [ ! "${IS_UPDATE}" ]
+then
 wait_for_fn_result deleteNfsVmPrivateKey
+fi
 
 # Get Viya Cadence Release, but don't error out if we don't find it.
 getViyaCadenceRelease
@@ -2321,9 +2329,11 @@ wait_for_fn_with_ip_result getIngressIp V4_INGRESS_IP
 
 V4_CAS_IP="0.0.0.0"
 
-
+if [ ! "${IS_UPDATE}" ]
+then
 # Create home directoy
 wait_for_fn_result homeDir
+fi
 
 wait_for_fn_result updateSpecCirrusDeployments
 wait_for_fn_result waitForCirrusDeployments

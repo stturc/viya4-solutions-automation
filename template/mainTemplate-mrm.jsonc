@@ -194,7 +194,7 @@
         "appTrialPeriodDays": 14,
         "azCliVersion": "2.37.0",
         "kubernetesMajorVersion": "1.30",
-        "identityName": "[concat(parameters('deploymentName'), '-id-', substring(parameters('guid'),0,7))]",
+        "identityName":  "[concat(deployment().name,'-identity')]",
         "contributorRoleId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "rgContributorRoleDefinitionName": "[guid(concat(variables('identityName'), '-ra-rg-contributor'))]",
         "aksClusterUserRoleId": "4abbcc35-e782-43d8-92c5-2d3f1bd2253f",
@@ -209,7 +209,7 @@
         "viyaDeployDeploymentName": "[concat(deployment().name,'-deploy')]",
         "aksName": "[concat(parameters('deploymentName'), '-aks')]",
         "deploymentFqdn": "[if(equals(parameters('deploymentDnsSuffix'), 'cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('location'), '.cloudapp.azure.com'), concat(parameters('deploymentName'), '.', parameters('deploymentDnsSuffix')))]",
-        "storageAccountName": "[concat(take(replace(parameters('deploymentName'),'-',''),12),take(replace(parameters('guid'),'-',''),12))]",
+        "storageAccountName": "[concat(take(replace(parameters('deploymentName'),'-',''),17),'storage')]",
         "storageAccountContainerName": "deploymentassets",
         "jumpVmAdminUser": "jumpuser",
         "nfsVmAdminUser": "nfsuser",
@@ -586,7 +586,8 @@
         "statelessConfig": "[variables('aksSizing')[parameters('aksSizing')].statelessConfig]",
         "managementConfig": "[variables('aksSizing')[parameters('aksSizing')].managementConfig]",
         "defaultConfig": "[variables('aksSizing')[parameters('aksSizing')].defaultConfig]",
-        "backupConfig": "[variables('aksSizing')[parameters('aksSizing')].backupConfig]"
+        "backupConfig": "[variables('aksSizing')[parameters('aksSizing')].backupConfig]",
+        "isUpdate": true
     },
     "resources": [
         {
@@ -623,6 +624,7 @@
            }
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('vnetDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -665,6 +667,7 @@
         },
 
         {
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('nsgDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -699,6 +702,7 @@
            }
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Storage/storageAccounts",
            "apiVersion": "2022-05-01",
            "name": "[variables('storageAccountName')]",
@@ -712,6 +716,7 @@
            }
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
            "apiVersion": "2021-06-01",
            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('storageAccountContainerName'))]",
@@ -720,6 +725,7 @@
            ]
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
            "name": "[variables('keypairGeneratorScriptName')]",
@@ -764,6 +770,7 @@
            ]
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('nfsDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -805,6 +812,7 @@
            }
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('jumpDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -871,7 +879,7 @@
            ]
         },
         {
-           "condition": "[greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0)]",
+           "condition": "[and(not(variables('isUpdate')),greater(length(variables('aksSizing')[parameters('aksSizing')].extPgConfig), 0))]",
            "copy": {
              "name": "extPgConfigLoop",
              "count": "[length(variables('aksSizing')[parameters('aksSizing')].extPgConfig)]",
@@ -911,6 +919,7 @@
            }
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "name": "[variables('aksDeploymentName')]",
            "type": "Microsoft.Resources/deployments",
            "apiVersion": "2021-04-01",
@@ -940,6 +949,7 @@
            }
         },
         {
+           "condition": "[not(variables('isUpdate'))]",
            "type": "Microsoft.Authorization/roleAssignments",
            "apiVersion": "2022-01-01-preview",
            "name": "[variables('aksClusterUserRoleDefinitionName')]",
@@ -982,7 +992,7 @@
                    "aksName": { "value": "[variables('aksName')]" }, 
                    "kubernetesVersion": { "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]" }, 
                    "v4CfgNamespace": { "value": "[variables('v4CfgNamespace')]" }, 
-                   "v4CfgRwxFilestoreEndpoint": { "value": "[reference(variables('nfsDeploymentName')).outputs.privateIp.value]" }, 
+                   "v4CfgRwxFilestoreEndpoint": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-3-nfs-nic'),'2021-04-01').ipConfigurations[0].properties.privateIPAddress]"}, 
                    "v4CfgRwxFilestorePath": { "value": "[variables('v4CfgRwxFilestorePath')]" }, 
                    "v4CfgIngressDnsPrefix": { "value": "[parameters('deploymentPrefix')]" }, 
                    "v4CfgIngressFqdn": { "value": "[variables('deploymentFqdn')]" }, 
@@ -990,11 +1000,11 @@
                    "appPlanName": { "value": "[variables('appPlanName')]" }, 
                    "appTrialPeriodDays": { "value": "[variables('appTrialPeriodDays')]" }, 
                    "nfsVmAdminUser": { "value": "[variables('nfsVmAdminUser')]" }, 
-                   "nfsVmIp": { "value": "[reference(variables('nfsDeploymentName')).outputs.privateIp.value]" }, 
+                   "nfsVmIp": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-3-nfs-nic'),'2021-04-01').ipConfigurations[0].properties.privateIPAddress]"}, 
                    "storageAccountName": { "value": "[variables('storageAccountName')]" }, 
                    "storageAccountContainerName": { "value": "[variables('storageAccountContainerName')]" }, 
                    "viyaAdminPassword": { "value": "[parameters('viyaAdminPassword')]" }, 
-                   "jumpVmIp": { "value": "[reference(variables('jumpDeploymentName')).outputs.publicIp.value]" }, 
+                   "jumpVmIp": { "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', 'mapp-stturc-3-jump-public_ip'),'2021-04-01').ipAddress]"}, 
                    "deployScriptContainerCleanupPreference": { "value": "[parameters('deployScriptContainerCleanupPreference')]" }, 
                    "stepInstallSupersetFlag": { "value": "[parameters('stepInstallSupersetFlag')]" }, 
                    "stepUpdateSpecCirrusDeploymentsFlag": { "value": "[parameters('stepUpdateSpecCirrusDeploymentsFlag')]" }, 
@@ -1007,36 +1017,10 @@
                    "tlsCertB64": { "value": "[parameters('tlsCertB64')]" }, 
                    "tlsKeyB64": { "value": "[parameters('tlsKeyB64')]" }, 
                    "tlsTrustedCaCertsB64": { "value": "[parameters('tlsTrustedCaCertsB64')]" },
+                   "isUpdate": {"value": "[variables('isUpdate')]" },
                    "viyaOrderSASURI": { "value": "[parameters('viyaOrderSASURI')]" }
                }
            }
         }
-    ],
-    "outputs": {
-        
-        "sasViyaUrl": {
-            "type": "string",
-            "value": "[variables('deploymentFqdn')]"
-        },
-        "sasViyaJumpIp": {
-           "type": "string",
-           "value": "[reference(variables('jumpDeploymentName')).outputs.publicIp.value]"
-        },
-        "sasViyaCaCertificateBase64": {
-           "type": "string",
-           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CaCertificateBase64.value]"
-        },
-        "sasViyaCadence": {
-           "type": "string",
-           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CfgCadence.value]"
-        },
-        "sasViyaIngressIp": {
-           "type": "string",
-           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4IngressIp.value]"
-        },
-        "kubernetesVersion": {
-           "type": "string",
-           "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]"
-        }
-    }
+    ]
 }
