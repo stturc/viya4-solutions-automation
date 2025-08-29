@@ -120,7 +120,7 @@
         },
         "isUpdate": {
             "type": "boolean",
-            "defaultValue": "false"
+            "defaultValue": false
         },
         "viyaOrderSASURI": {
             "type": "string",
