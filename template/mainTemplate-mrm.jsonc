@@ -587,7 +587,7 @@
         "managementConfig": "[variables('aksSizing')[parameters('aksSizing')].managementConfig]",
         "defaultConfig": "[variables('aksSizing')[parameters('aksSizing')].defaultConfig]",
         "backupConfig": "[variables('aksSizing')[parameters('aksSizing')].backupConfig]",
-        "isUpdate": true
+        "isUpdate": false
     },
     "resources": [
         {
@@ -992,7 +992,7 @@
                    "aksName": { "value": "[variables('aksName')]" }, 
                    "kubernetesVersion": { "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]" }, 
                    "v4CfgNamespace": { "value": "[variables('v4CfgNamespace')]" }, 
-                   "v4CfgRwxFilestoreEndpoint": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-3-nfs-nic'),'2021-04-01').ipConfigurations[0].properties.privateIPAddress]"}, 
+                   "v4CfgRwxFilestoreEndpoint": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-2-nfs-nic'),'2021-04-01').ipConfigurations[0].properties.privateIPAddress]"}, 
                    "v4CfgRwxFilestorePath": { "value": "[variables('v4CfgRwxFilestorePath')]" }, 
                    "v4CfgIngressDnsPrefix": { "value": "[parameters('deploymentPrefix')]" }, 
                    "v4CfgIngressFqdn": { "value": "[variables('deploymentFqdn')]" }, 
@@ -1000,11 +1000,11 @@
                    "appPlanName": { "value": "[variables('appPlanName')]" }, 
                    "appTrialPeriodDays": { "value": "[variables('appTrialPeriodDays')]" }, 
                    "nfsVmAdminUser": { "value": "[variables('nfsVmAdminUser')]" }, 
-                   "nfsVmIp": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-3-nfs-nic'),'2021-04-01').ipConfigurations[0].properties.privateIPAddress]"}, 
+                   "nfsVmIp": { "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'mapp-stturc-2-nfs-nic'),'2021-04-01').ipConfigurations[0].properties.privateIPAddress]"}, 
                    "storageAccountName": { "value": "[variables('storageAccountName')]" }, 
                    "storageAccountContainerName": { "value": "[variables('storageAccountContainerName')]" }, 
                    "viyaAdminPassword": { "value": "[parameters('viyaAdminPassword')]" }, 
-                   "jumpVmIp": { "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', 'mapp-stturc-3-jump-public_ip'),'2021-04-01').ipAddress]"}, 
+                   "jumpVmIp": { "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', 'mapp-stturc-2-jump-public_ip'),'2021-04-01').ipAddress]"}, 
                    "deployScriptContainerCleanupPreference": { "value": "[parameters('deployScriptContainerCleanupPreference')]" }, 
                    "stepInstallSupersetFlag": { "value": "[parameters('stepInstallSupersetFlag')]" }, 
                    "stepUpdateSpecCirrusDeploymentsFlag": { "value": "[parameters('stepUpdateSpecCirrusDeploymentsFlag')]" }, 
@@ -1022,5 +1022,32 @@
                }
            }
         }
-    ]
+    ],
+    "outputs": {
+        
+        "sasViyaUrl": {
+            "type": "string",
+            "value": "[variables('deploymentFqdn')]"
+        },
+        "sasViyaJumpIp": {
+           "type": "string",
+           "value": "[reference(variables('jumpDeploymentName')).outputs.publicIp.value]"
+        },
+        "sasViyaCaCertificateBase64": {
+           "type": "string",
+           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CaCertificateBase64.value]"
+        },
+        "sasViyaCadence": {
+           "type": "string",
+           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4CfgCadence.value]"
+        },
+        "sasViyaIngressIp": {
+           "type": "string",
+           "value": "[reference(variables('viyaDeployDeploymentName')).outputs.v4IngressIp.value]"
+        },
+        "kubernetesVersion": {
+           "type": "string",
+           "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]"
+        }
+    }
 }
