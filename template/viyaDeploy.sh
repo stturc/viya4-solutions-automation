@@ -2161,7 +2161,7 @@ wait_for_fn_result getKubeconfig
 wait_for_fn_with_str_result getStorageAccountKey STORAGE_ACCOUNT_KEY
 
 # Download NFS VM Private Key
-if [ -n "${IS_UPDATE}" ]
+if [ ! "${IS_UPDATE}" ]
 then
 wait_for_fn_result downloadNfsVmPrivateKey
 fi
@@ -2312,7 +2312,7 @@ wait_for_fn_result registerExtClient
 
 # Clean up and output for template
 # Delete NFS VM Private Key
-if [ -n "${IS_UPDATE}" ]
+if [ ! "${IS_UPDATE}" ]
 then
 wait_for_fn_result deleteNfsVmPrivateKey
 fi
@@ -2329,7 +2329,7 @@ wait_for_fn_with_ip_result getIngressIp V4_INGRESS_IP
 
 V4_CAS_IP="0.0.0.0"
 
-if [ -n "${IS_UPDATE}" ]
+if [ ! "${IS_UPDATE}" ]
 then
 # Create home directoy
 wait_for_fn_result homeDir
