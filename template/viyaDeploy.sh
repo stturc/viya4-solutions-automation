@@ -2329,9 +2329,11 @@ wait_for_fn_with_ip_result getIngressIp V4_INGRESS_IP
 
 V4_CAS_IP="0.0.0.0"
 
-
+if [ -n "${IS_UPDATE}" ]
+then
 # Create home directoy
 wait_for_fn_result homeDir
+fi
 
 wait_for_fn_result updateSpecCirrusDeployments
 wait_for_fn_result waitForCirrusDeployments
