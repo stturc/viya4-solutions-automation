@@ -2356,9 +2356,9 @@ wait_for_fn_result createSupersetNamespace
 wait_for_fn_result deploySuperset
 
 #Fix Viya Admin
-if [ "${IS_UPDATE}" != "True" ]; then
+#if [ "${IS_UPDATE}" != "True" ]; then
   wait_for_fn_result fixViyaAdmin
-fi
+#fi
 
 # Register Ext Client
 wait_for_fn_with_str_result getAccessToken ACCESS_TOKEN
@@ -2385,9 +2385,9 @@ V4_CAS_IP="0.0.0.0"
 
 
 # Create home directoy
-if [ "${IS_UPDATE}" != "True" ]; then
+#if [ "${IS_UPDATE}" != "True" ]; then
   wait_for_fn_result homeDir
-fi
+#fi
 
 wait_for_fn_result updateSpecCirrusDeployments
 wait_for_fn_result waitForCirrusDeployments
