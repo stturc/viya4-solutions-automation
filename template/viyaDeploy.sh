@@ -1081,7 +1081,8 @@ function uploadCaCertificate {
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
     --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
-    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
+    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem" \
+    --overwrite
 }
 
 # Upload logfile
@@ -1134,70 +1135,121 @@ function fixViyaAdmin {
 }
 
 function checkExternalPostgres {
-  # Detect if external postgres is part of deployment
-  echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
-  STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
+  if [ "${IS_UPDATE}" == "True" ]; then
+    # Detect if external postgres is part of deployment
+    echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
+    
+    extPG_IDS_name=${RG/-mrg/-extpg-ids}
+    extPG_CDS_name=${RG/-mrg/-extpg-cds}
 
-  extPgConfig=$(echo "$EXTPG_CONFIG_B64" | /bin/base64 -d )
-  echolog "[checkExternalPostgres] extPgConfig: $extPgConfig"
-  extPgServers=$(echo "$extPgConfig" | jq -r '.')
-  echolog "[checkExternalPostgres] extPgServers: $extPgServers"
-  extPgServersLength=$(echo "$extPgServers" | jq -r 'length')
-  echolog "[checkExternalPostgres] extPgServersLength: $extPgServersLength"
-  if [ "$extPgServersLength" -ne 0 ]
-  then
-      for ix_tmp in $(seq 1 $extPgServersLength)
-      do
-          ix=$((ix_tmp-1))
-          extPgServer=$(echo "$extPgServers" | jq -r ".[$ix]")
-          extPgServerName=$(echo "$extPgServer" | jq -r ".ServerName")
-          extPgServerAdminLogin=$(echo "$extPgServer" | jq -r ".AdministratorLogin")
-          extPgServerAdminPassword=$(echo "$extPgServer" | jq -r ".AdministratorLoginPassword")
-          extPgServerRole=$(echo "$extPgServer" | jq -r ".Role")
-          extPgServerDatabases=$(echo "$extPgServer" | jq -r ".Databases")
-          echolog "[checkExternalPostgres] Check external Postgres server existence: $extPgServerName"
-          if az postgres flexible-server show -g ${RG} -n ${extPgServerName} > /dev/null 2>&1
-          then  
-              echolog "[checkExternalPostgres] External PostgreSQL server detected ($extPgServerName)"
-              EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPgServerName} -o json)
-              EXTPG_FQDN=$(echo "$EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
-              EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPgServerName} | jq -r ".value")
+    if [[ $(az postgres flexible-server list --resource-group $RG --query "[?name=='$extPG_IDS_name'] | length(@)") > 0 ]] && [[ $(az postgres flexible-server list --resource-group $RG --query "[?name=='$extPG_CDS_name'] | length(@)") > 0 ]]; then
+      echolog "[checkExternalPostgres] External postgres instances exist"
 
-              extPgServerDatabasesLength=$(echo "$extPgServerDatabases" | jq -r 'length')
-              if [ "$extPgServerDatabasesLength" -ne 0 ]
-              then
-                  for jx_tmp in $(seq 1 $extPgServerDatabasesLength)
-                  do
-                      jx=$((jx_tmp-1))
-                      extPgServerDatabase=$(echo "$extPgServerDatabases" | jq -r ".[$jx]")
-                      extPgServerDatabaseName=$(echo "$extPgServerDatabase" | jq -r ".name")
-                      extPgServerDatabaseDefault=$(echo "$extPgServerDatabase" | jq -r ".default")
-                      echolog "[checkExternalPostgres] Creating database $extPgServerDatabaseName..."
-                      az postgres flexible-server db create -g ${RG} -s ${extPgServerName} --database-name $extPgServerDatabaseName
+      CDS_POSTGRES_SECRET_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get secrets -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("cds-postgres-platform-postgres-user"; "i"))' --raw-output | head -n 1)
+      CDS_ADMIN_USER=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${CDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.username}' | /bin/base64 -d)
+      CDS_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${CDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.password}' | /bin/base64 -d)
+      CDS_EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPG_CDS_name} -o json)
+      CDS_EXTPG_FQDN=$(echo "$CDS_EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
+      CDS_EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPG_CDS_name} | jq -r ".value")
 
-                      if [ "$extPgServerDatabaseDefault" == "Y" ]
-                      then
-                        echolog "[checkExternalPostgres] Configuring database $extPgServerDatabaseName..."
-                        STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
-                          { "'"$extPgServerRole"'": {
-                            "internal": false, 
-                            "admin": "'"$extPgServerAdminLogin"'", 
-                            "password": "'"$extPgServerAdminPassword"'", 
-                            "fqdn": "'"$EXTPG_FQDN"'", 
-                            "ssl_enforcement_enabled": true, 
-                            "server_port": "'"$EXTPG_PORT"'", 
-                            "database": "'"$extPgServerDatabaseName"'"
-                          }}')
-                      else  
-                        echolog "[checkExternalPostgres] Skipping Configuration for database $extPgServerDatabaseName..."
-                      fi
-                  done
-              fi
-          fi
-      done
+      IDS_POSTGRES_SECRET_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get secrets -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("default-platform-postgres-user"; "i"))' --raw-output | head -n 1)
+      IDS_ADMIN_USER=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${IDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.username}' | /bin/base64 -d)
+      IDS_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${IDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.password}' | /bin/base64 -d)
+      IDS_EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPG_IDS_name} -o json)
+      IDS_EXTPG_FQDN=$(echo "$IDS_EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
+      IDS_EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPG_IDS_name} | jq -r ".value")
+
+      STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
+      STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
+        { "'"cds-postgres"'": {
+          "internal": false, 
+          "admin": "'"$CDS_ADMIN_USER"'", 
+          "password": "'"$CDS_ADMIN_PASSWORD"'", 
+          "fqdn": "'"$CDS_EXTPG_FQDN"'", 
+          "ssl_enforcement_enabled": true, 
+          "server_port": "'"$CDS_EXTPG_PORT"'", 
+          "database": "'"SharedServices"'"
+        }}')
+      STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
+        { "'"default"'": {
+          "internal": false, 
+          "admin": "'"$IDS_ADMIN_USER"'", 
+          "password": "'"$IDS_ADMIN_PASSWORD"'", 
+          "fqdn": "'"$IDS_EXTPG_FQDN"'", 
+          "ssl_enforcement_enabled": true, 
+          "server_port": "'"$IDS_EXTPG_PORT"'", 
+          "database": "'"SharedServices"'"
+        }}')
+    else
+      echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
+      export STEP_CONFIGURE_POSTGRES_JSON=""
+    fi
   else
-    echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
-    export STEP_CONFIGURE_POSTGRES_JSON=""
+    # Detect if external postgres is part of deployment
+    echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
+    STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
+
+    extPgConfig=$(echo "$EXTPG_CONFIG_B64" | /bin/base64 -d )
+    echolog "[checkExternalPostgres] extPgConfig: $extPgConfig"
+    extPgServers=$(echo "$extPgConfig" | jq -r '.')
+    echolog "[checkExternalPostgres] extPgServers: $extPgServers"
+    extPgServersLength=$(echo "$extPgServers" | jq -r 'length')
+    echolog "[checkExternalPostgres] extPgServersLength: $extPgServersLength"
+    if [ "$extPgServersLength" -ne 0 ]
+    then
+        for ix_tmp in $(seq 1 $extPgServersLength)
+        do
+            ix=$((ix_tmp-1))
+            extPgServer=$(echo "$extPgServers" | jq -r ".[$ix]")
+            extPgServerName=$(echo "$extPgServer" | jq -r ".ServerName")
+            extPgServerAdminLogin=$(echo "$extPgServer" | jq -r ".AdministratorLogin")
+            extPgServerAdminPassword=$(echo "$extPgServer" | jq -r ".AdministratorLoginPassword")
+            extPgServerRole=$(echo "$extPgServer" | jq -r ".Role")
+            extPgServerDatabases=$(echo "$extPgServer" | jq -r ".Databases")
+            echolog "[checkExternalPostgres] Check external Postgres server existence: $extPgServerName"
+            if az postgres flexible-server show -g ${RG} -n ${extPgServerName} > /dev/null 2>&1
+            then  
+                echolog "[checkExternalPostgres] External PostgreSQL server detected ($extPgServerName)"
+                EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPgServerName} -o json)
+                EXTPG_FQDN=$(echo "$EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
+                EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPgServerName} | jq -r ".value")
+
+                extPgServerDatabasesLength=$(echo "$extPgServerDatabases" | jq -r 'length')
+                if [ "$extPgServerDatabasesLength" -ne 0 ]
+                then
+                    for jx_tmp in $(seq 1 $extPgServerDatabasesLength)
+                    do
+                        jx=$((jx_tmp-1))
+                        extPgServerDatabase=$(echo "$extPgServerDatabases" | jq -r ".[$jx]")
+                        extPgServerDatabaseName=$(echo "$extPgServerDatabase" | jq -r ".name")
+                        extPgServerDatabaseDefault=$(echo "$extPgServerDatabase" | jq -r ".default")
+                        echolog "[checkExternalPostgres] Creating database $extPgServerDatabaseName..."
+                        az postgres flexible-server db create -g ${RG} -s ${extPgServerName} --database-name $extPgServerDatabaseName
+
+                        if [ "$extPgServerDatabaseDefault" == "Y" ]
+                        then
+                          echolog "[checkExternalPostgres] Configuring database $extPgServerDatabaseName..."
+                          STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
+                            { "'"$extPgServerRole"'": {
+                              "internal": false, 
+                              "admin": "'"$extPgServerAdminLogin"'", 
+                              "password": "'"$extPgServerAdminPassword"'", 
+                              "fqdn": "'"$EXTPG_FQDN"'", 
+                              "ssl_enforcement_enabled": true, 
+                              "server_port": "'"$EXTPG_PORT"'", 
+                              "database": "'"$extPgServerDatabaseName"'"
+                            }}')
+                        else  
+                          echolog "[checkExternalPostgres] Skipping Configuration for database $extPgServerDatabaseName..."
+                        fi
+                    done
+                fi
+            fi
+        done
+    else
+      echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
+      export STEP_CONFIGURE_POSTGRES_JSON=""
+    fi
   fi
 }
 
@@ -2172,36 +2224,33 @@ wait_for_fn_result downloadKubectl
 chmod u+x /usr/local/bin/kubectl
 
 if [ "${IS_UPDATE}" == "True" ]; then
-  # echolog "Retrieve IP address of container associated with deployment script"
-  # DS_IP=$(az resource show \
-  # --ids "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RG/providers/Microsoft.Resources/deploymentScripts/${AKS/-aks/-ds-viya-deploy}" \
-  # --query "properties.containerConfiguration.containerGroupProperties.ipAddress.ip")
-  # echolog "DS_IP=${DS_IP}"
-
-  DS_IP="0.0.0.0/0"
-  CURRENT_IPS=$(az aks show \
+  apk -U add curl
+  CURRENT_OUTBOUND_IP=$(curl ipinfo.io/ip)
+  CURRENT_AUTHORIZED_IPS=$(az aks show \
     --resource-group "$RG" \
     --name "$AKS" \
-    --query "apiServerAccessProfile.authorizedIPRanges" \
-    -o tsv | tr '\t' ',')
-  if [[ -z "$CURRENT_IPS" ]]; then
-    MERGED="$DS_IP"
+    --query "apiServerAccessProfile.authorizedIpRanges" \
+    -o tsv | tr '\n' ',')
+  
+  echolog "Found current IPs of ${CURRENT_AUTHORIZED_IPS}"
+  if [[ -z "$CURRENT_AUTHORIZED_IPS" ]]; then
+    MERGED="$CURRENT_OUTBOUND_IP"
   else
+    if [[ "${CURRENT_AUTHORIZED_IPS: -1}" == "," ]]; then
+      CURRENT_AUTHORIZED_IPS="${CURRENT_AUTHORIZED_IPS%,}"
+    fi
     # Check if IP already exists
-    if echo "$CURRENT_IPS" | grep -qw "$DS_IP"; then
-      echolog "IP $DS_IP is already authorized. Nothing to do."
+    if echo "$CURRENT_AUTHORIZED_IPS" | grep -qw "$CURRENT_OUTBOUND_IP"; then
+      echolog "IP $CURRENT_OUTBOUND_IP is already authorized. Nothing to do."
       exit 0
     fi
-    MERGED="$CURRENT_IPS,$DS_IP"
+    MERGED="$CURRENT_AUTHORIZED_IPS,$CURRENT_OUTBOUND_IP/32"
   fi
-  echolog "Updating authorized IP ranges: $MERGED"
+  echolog "Updating current AKS API server authorized IP ranges to: $MERGED"
 
-  az aks update \
-    --resource-group "$RG" \
-    --name "$AKS_NAME" \
-    --api-server-authorized-ip-ranges "$MERGED"
-
-  echo "Successfully updated AKS API server authorized IP ranges."
+  az aks update -g ${RG} -n ${AKS} --debug --api-server-authorized-ip-ranges "${MERGED}" >>$LOGFILE 2>&1
+  az storage account update -g ${RG} -n ${STORAGE_ACCOUNT} --default-action Allow
+  echolog "Successfully updated AKS API server authorized IP ranges and storage account default action."
 fi
 
 # Get managed users Kubeconfig
@@ -2213,6 +2262,11 @@ wait_for_fn_with_str_result getStorageAccountKey STORAGE_ACCOUNT_KEY
 # Download NFS VM Private Key
 if [ "${IS_UPDATE}" != "True" ]; then
   wait_for_fn_result downloadNfsVmPrivateKey
+fi
+
+if [ "${IS_UPDATE}" == "True" ]; then
+  LDAP_CONFIG_MAP_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' --raw-output | head -n 1)
+  LDAP_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get configmap ${LDAP_CONFIG_MAP_NAME} -o jsonpath='{.data.LDAP_ADMIN_PASSWORD}')
 fi
 
 # Create Viya namespace
@@ -2356,9 +2410,7 @@ wait_for_fn_result createSupersetNamespace
 wait_for_fn_result deploySuperset
 
 #Fix Viya Admin
-if [ "${IS_UPDATE}" != "True" ]; then
-  wait_for_fn_result fixViyaAdmin
-fi
+wait_for_fn_result fixViyaAdmin
 
 # Register Ext Client
 wait_for_fn_with_str_result getAccessToken ACCESS_TOKEN
@@ -2395,7 +2447,9 @@ wait_for_fn_result waitForCirrusDeployments
 wait_for_fn_result addUsers
 
 # Load Cirrus Data
-wait_for_fn_result loadCirrusData
+if [ "${IS_UPDATE}" != "True" ]; then
+  wait_for_fn_result loadCirrusData
+fi
 
 wait_for_fn_result disableNonEssentialAppsRunTime
 wait_for_fn_result disableCAS
@@ -2410,46 +2464,22 @@ wait_for_fn_result uploadLogfile
 echolog "---"
 # lock down AKS API Server and Storage Account if we need to
 if [ "${USE_IP_ALLOWLIST}" == "True" ]; then
-  if [ "${IS_UPDATE}" != "True" ]; then
-    echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, locking down deployment..."
-    applyAllowlist
-    echolog "Allow list applied..."
-  else
-    echolog "Get current list of authorized IPs"
-    CURRENT_IPS=$(az aks show \
-      --resource-group "$RG" \
-      --name "$AKS" \
-      --query "apiServerAccessProfile.authorizedIPRanges" \
-      -o tsv | tr '\t' ',')
-
-    if [[ -z "$CURRENT_IPS" ]]; then
-      echolog "No authorized IPs are currently set. Nothing to remove."
-    else
-      echolog "Current authorized IPs: $CURRENT_IPS"
-      if [ -n "$DS_IP" ]; then
-        echolog "Removing DS_IP: $DS_IP"
-        # Convert to array and filter out REMOVE_IP
-        NEW_IPS=$(echo "$CURRENT_IPS" | tr ',' '\n' | grep -vw "$DS_IP" | paste -sd "," -)
-
-        if [[ "$NEW_IPS" == "$CURRENT_IPS" ]]; then
-          echolog "IP $DS_IP not found in the current list. Nothing to do."
-        fi
-
-        echolog "Updating authorized IP ranges: $NEW_IPS"
-
-        az aks update \
-          --resource-group "$RG" \
-          --name "$AKS" \
-          --api-server-authorized-ip-ranges "$NEW_IPS"
-      else
-        echolog "DS_IP is empty. Nothing to do."
-      fi
-    fi
-  fi
+  echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, locking down deployment..."
+  applyAllowlist
+  echolog "Allow list applied..."
 else
-  echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, so we won't lock down deployment."
-fi
+  if [ "${IS_UPDATE}" != "True" ]; then
+    az aks update -g ${RG} -n ${AKS} --debug --api-server-authorized-ip-ranges "${CURRENT_AUTHORIZED_IPS}" >>$LOGFILE 2>&1
 
+    echolog "[applyAllowlist] Setting Storage Account Deny default action..."
+    wait_for_fn_result setStorageAccountDenyDefaultAction
+
+    echolog "[applyAllowlist] Adding Storage Account Network Rules..."
+    wait_for_fn_result addStorageAccountNetworkRules
+  else
+    echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, so we won't lock down deployment."
+  fi
+fi
 
 # Write output
 RESULT="{"
