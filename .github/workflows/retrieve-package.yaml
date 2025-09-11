@@ -63,7 +63,7 @@ jobs:
           viya_solution="${{ inputs.viya_solution }}"
           
           # Default repo
-          repo="sassoftware/viya4-solutions-automation"
+          repo="stturc/viya4-solutions-automation"
           tag_version="$package_version"
 
           # Check for org/repo:version format
