@@ -1133,13 +1133,9 @@ function fixViyaAdmin {
   done
 }
 
-
-
-  if is update, then look at resource group and see if either server exists, if it does enter first block, else enter the else condition
-  extPgServerName=${RG/-rg/-extpg-ids}
-
-
 function checkExternalPostgres {
+  #extPgServerName=${RG/-rg/-extpg-ids}
+  # Stephen
 
   if [ "${IS_UPDATE}" == "True" ]; then
     # Detect if external postgres is part of deployment
