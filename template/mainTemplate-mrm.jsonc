@@ -593,7 +593,10 @@
             },
             "N/A": {
                 "nodeTopology": "",
-                "extPgConfig":[],
+                "extPgConfig":[
+                    "[variables('extPgIDS')]",
+                    "[variables('extPgCDS')]"
+                ],
                 "casConfig":{},
                 "computeConfig":{},
                 "statefulConfig":{},
