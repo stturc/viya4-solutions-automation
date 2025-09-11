@@ -1207,7 +1207,6 @@ function checkExternalPostgres {
       echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
       export STEP_CONFIGURE_POSTGRES_JSON=""
     fi
-  fi
   else
     # Detect if external postgres is part of deployment
     echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
