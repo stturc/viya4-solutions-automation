@@ -219,7 +219,9 @@ function getKubeconfig {
 
 # Get storage account key
 function getStorageAccountKey {
+  az storage account keys list -g "${RG}" -n "${STORAGE_ACCOUNT}" --query "[0].value" -o tsv
   STORAGE_ACCOUNT_KEY=$(az storage account keys list -g "${RG}" -n "${STORAGE_ACCOUNT}" --query "[0].value" -o tsv)
+  echolog "Storage account key is ${STORAGE_ACCOUNT_KEY}"
 }
 
 function retrieveNFSServerInfo {
@@ -1058,6 +1060,11 @@ function zipDeployAssets {
 
 # Upload assets
 function uploadDeployAssets {
+  echolog "Storage account is ${STORAGE_ACCOUNT}"
+  echolog "Storage account key is ${STORAGE_ACCOUNT_KEY}"
+  echolog "Storage account container is ${STORAGE_ACCOUNT_CONTAINER}"
+  echolog "home  is ${HOME}"
+
   az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
@@ -1077,11 +1084,17 @@ function uploadOutputs {
 
 # Upload CA certificate
 function uploadCaCertificate {
+  echolog "[uploadCaCertificate] Storage account is ${STORAGE_ACCOUNT}"
+  echolog "[uploadCaCertificate] Storage account key is ${STORAGE_ACCOUNT_KEY}"
+  echolog "[uploadCaCertificate] Storage account container is ${STORAGE_ACCOUNT_CONTAINER}"
+  echolog "[uploadCaCertificate] home  is ${HOME}"
+  
   az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
     --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
-    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
+    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem" \
+    --overwrite
 }
 
 # Upload logfile
@@ -1134,70 +1147,151 @@ function fixViyaAdmin {
 }
 
 function checkExternalPostgres {
-  # Detect if external postgres is part of deployment
-  echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
-  STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
+  #extPgServerName=${RG/-rg/-extpg-ids}
+  # Stephen
 
-  extPgConfig=$(echo "$EXTPG_CONFIG_B64" | /bin/base64 -d )
-  echolog "[checkExternalPostgres] extPgConfig: $extPgConfig"
-  extPgServers=$(echo "$extPgConfig" | jq -r '.')
-  echolog "[checkExternalPostgres] extPgServers: $extPgServers"
-  extPgServersLength=$(echo "$extPgServers" | jq -r 'length')
-  echolog "[checkExternalPostgres] extPgServersLength: $extPgServersLength"
-  if [ "$extPgServersLength" -ne 0 ]
-  then
-      for ix_tmp in $(seq 1 $extPgServersLength)
-      do
-          ix=$((ix_tmp-1))
-          extPgServer=$(echo "$extPgServers" | jq -r ".[$ix]")
-          extPgServerName=$(echo "$extPgServer" | jq -r ".ServerName")
-          extPgServerAdminLogin=$(echo "$extPgServer" | jq -r ".AdministratorLogin")
-          extPgServerAdminPassword=$(echo "$extPgServer" | jq -r ".AdministratorLoginPassword")
-          extPgServerRole=$(echo "$extPgServer" | jq -r ".Role")
-          extPgServerDatabases=$(echo "$extPgServer" | jq -r ".Databases")
-          echolog "[checkExternalPostgres] Check external Postgres server existence: $extPgServerName"
-          if az postgres flexible-server show -g ${RG} -n ${extPgServerName} > /dev/null 2>&1
-          then  
-              echolog "[checkExternalPostgres] External PostgreSQL server detected ($extPgServerName)"
-              EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPgServerName} -o json)
-              EXTPG_FQDN=$(echo "$EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
-              EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPgServerName} | jq -r ".value")
+  if [ "${IS_UPDATE}" == "True" ]; then
+    # Detect if external postgres is part of deployment
+    echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
+    
+    extPG_IDS_name=${RG/-mrg/-nfs-vm}-extpg-ids
+    extPG_CDS_name=${RG/-mrg/-nfs-vm}-extpg-cds
 
-              extPgServerDatabasesLength=$(echo "$extPgServerDatabases" | jq -r 'length')
-              if [ "$extPgServerDatabasesLength" -ne 0 ]
-              then
-                  for jx_tmp in $(seq 1 $extPgServerDatabasesLength)
-                  do
-                      jx=$((jx_tmp-1))
-                      extPgServerDatabase=$(echo "$extPgServerDatabases" | jq -r ".[$jx]")
-                      extPgServerDatabaseName=$(echo "$extPgServerDatabase" | jq -r ".name")
-                      extPgServerDatabaseDefault=$(echo "$extPgServerDatabase" | jq -r ".default")
-                      echolog "[checkExternalPostgres] Creating database $extPgServerDatabaseName..."
-                      az postgres flexible-server db create -g ${RG} -s ${extPgServerName} --database-name $extPgServerDatabaseName
+    if [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_IDS_name'] | length(@)") > 0 ]] && [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_CDS_name'] | length(@)") > 0 ]]; then
+      echolog "[checkExternalPostgres] External postgres instances exists"
+    else
+      echolog "[checkExternalPostgres] External postgres instances doesn't exist"
+    fi
+    
+    STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
 
-                      if [ "$extPgServerDatabaseDefault" == "Y" ]
-                      then
-                        echolog "[checkExternalPostgres] Configuring database $extPgServerDatabaseName..."
-                        STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
-                          { "'"$extPgServerRole"'": {
-                            "internal": false, 
-                            "admin": "'"$extPgServerAdminLogin"'", 
-                            "password": "'"$extPgServerAdminPassword"'", 
-                            "fqdn": "'"$EXTPG_FQDN"'", 
-                            "ssl_enforcement_enabled": true, 
-                            "server_port": "'"$EXTPG_PORT"'", 
-                            "database": "'"$extPgServerDatabaseName"'"
-                          }}')
-                      else  
-                        echolog "[checkExternalPostgres] Skipping Configuration for database $extPgServerDatabaseName..."
-                      fi
-                  done
-              fi
-          fi
-      done
+    extPgConfig=$(echo "$EXTPG_CONFIG_B64" | /bin/base64 -d )
+    echolog "[checkExternalPostgres] extPgConfig: $extPgConfig"
+    extPgServers=$(echo "$extPgConfig" | jq -r '.')
+    echolog "[checkExternalPostgres] extPgServers: $extPgServers"
+    extPgServersLength=$(echo "$extPgServers" | jq -r 'length')
+    echolog "[checkExternalPostgres] extPgServersLength: $extPgServersLength"
+    if [ "$extPgServersLength" -ne 0 ]
+    then
+        for ix_tmp in $(seq 1 $extPgServersLength)
+        do
+            ix=$((ix_tmp-1))
+            extPgServer=$(echo "$extPgServers" | jq -r ".[$ix]")
+            extPgServerName=$(echo "$extPgServer" | jq -r ".ServerName")
+            extPgServerAdminLogin=$(echo "$extPgServer" | jq -r ".AdministratorLogin")
+            extPgServerAdminPassword=$(echo "$extPgServer" | jq -r ".AdministratorLoginPassword")
+            extPgServerRole=$(echo "$extPgServer" | jq -r ".Role")
+            extPgServerDatabases=$(echo "$extPgServer" | jq -r ".Databases")
+            echolog "[checkExternalPostgres] Check external Postgres server existence: $extPgServerName"
+            if az postgres flexible-server show -g ${RG} -n ${extPgServerName} > /dev/null 2>&1
+            then  
+                echolog "[checkExternalPostgres] External PostgreSQL server detected ($extPgServerName)"
+                EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPgServerName} -o json)
+                EXTPG_FQDN=$(echo "$EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
+                EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPgServerName} | jq -r ".value")
+
+                extPgServerDatabasesLength=$(echo "$extPgServerDatabases" | jq -r 'length')
+                if [ "$extPgServerDatabasesLength" -ne 0 ]
+                then
+                    for jx_tmp in $(seq 1 $extPgServerDatabasesLength)
+                    do
+                        jx=$((jx_tmp-1))
+                        extPgServerDatabase=$(echo "$extPgServerDatabases" | jq -r ".[$jx]")
+                        extPgServerDatabaseName=$(echo "$extPgServerDatabase" | jq -r ".name")
+                        extPgServerDatabaseDefault=$(echo "$extPgServerDatabase" | jq -r ".default")
+                        echolog "[checkExternalPostgres] Creating database $extPgServerDatabaseName..."
+                        #az postgres flexible-server db create -g ${RG} -s ${extPgServerName} --database-name $extPgServerDatabaseName
+
+                        if [ "$extPgServerDatabaseDefault" == "Y" ]
+                        then
+                          echolog "[checkExternalPostgres] Configuring database $extPgServerDatabaseName..."
+                          STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
+                            { "'"$extPgServerRole"'": {
+                              "internal": false, 
+                              "admin": "'"$extPgServerAdminLogin"'", 
+                              "password": "'"$extPgServerAdminPassword"'", 
+                              "fqdn": "'"$EXTPG_FQDN"'", 
+                              "ssl_enforcement_enabled": true, 
+                              "server_port": "'"$EXTPG_PORT"'", 
+                              "database": "'"$extPgServerDatabaseName"'"
+                            }}')
+                        else  
+                          echolog "[checkExternalPostgres] Skipping Configuration for database $extPgServerDatabaseName..."
+                        fi
+                    done
+                fi
+            fi
+        done
+    else
+      echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
+      export STEP_CONFIGURE_POSTGRES_JSON=""
+    fi
   else
-    echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
-    export STEP_CONFIGURE_POSTGRES_JSON=""
+    # Detect if external postgres is part of deployment
+    echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
+    STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
+
+    extPgConfig=$(echo "$EXTPG_CONFIG_B64" | /bin/base64 -d )
+    echolog "[checkExternalPostgres] extPgConfig: $extPgConfig"
+    extPgServers=$(echo "$extPgConfig" | jq -r '.')
+    echolog "[checkExternalPostgres] extPgServers: $extPgServers"
+    extPgServersLength=$(echo "$extPgServers" | jq -r 'length')
+    echolog "[checkExternalPostgres] extPgServersLength: $extPgServersLength"
+    if [ "$extPgServersLength" -ne 0 ]
+    then
+        for ix_tmp in $(seq 1 $extPgServersLength)
+        do
+            ix=$((ix_tmp-1))
+            extPgServer=$(echo "$extPgServers" | jq -r ".[$ix]")
+            extPgServerName=$(echo "$extPgServer" | jq -r ".ServerName")
+            extPgServerAdminLogin=$(echo "$extPgServer" | jq -r ".AdministratorLogin")
+            extPgServerAdminPassword=$(echo "$extPgServer" | jq -r ".AdministratorLoginPassword")
+            extPgServerRole=$(echo "$extPgServer" | jq -r ".Role")
+            extPgServerDatabases=$(echo "$extPgServer" | jq -r ".Databases")
+            echolog "[checkExternalPostgres] Check external Postgres server existence: $extPgServerName"
+            if az postgres flexible-server show -g ${RG} -n ${extPgServerName} > /dev/null 2>&1
+            then  
+                echolog "[checkExternalPostgres] External PostgreSQL server detected ($extPgServerName)"
+                EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPgServerName} -o json)
+                EXTPG_FQDN=$(echo "$EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
+                EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPgServerName} | jq -r ".value")
+
+                extPgServerDatabasesLength=$(echo "$extPgServerDatabases" | jq -r 'length')
+                if [ "$extPgServerDatabasesLength" -ne 0 ]
+                then
+                    for jx_tmp in $(seq 1 $extPgServerDatabasesLength)
+                    do
+                        jx=$((jx_tmp-1))
+                        extPgServerDatabase=$(echo "$extPgServerDatabases" | jq -r ".[$jx]")
+                        extPgServerDatabaseName=$(echo "$extPgServerDatabase" | jq -r ".name")
+                        extPgServerDatabaseDefault=$(echo "$extPgServerDatabase" | jq -r ".default")
+                        echolog "[checkExternalPostgres] Creating database $extPgServerDatabaseName..."
+                        az postgres flexible-server db create -g ${RG} -s ${extPgServerName} --database-name $extPgServerDatabaseName
+
+                        if [ "$extPgServerDatabaseDefault" == "Y" ]
+                        then
+                          echolog "[checkExternalPostgres] Configuring database $extPgServerDatabaseName..."
+                          STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
+                            { "'"$extPgServerRole"'": {
+                              "internal": false, 
+                              "admin": "'"$extPgServerAdminLogin"'", 
+                              "password": "'"$extPgServerAdminPassword"'", 
+                              "fqdn": "'"$EXTPG_FQDN"'", 
+                              "ssl_enforcement_enabled": true, 
+                              "server_port": "'"$EXTPG_PORT"'", 
+                              "database": "'"$extPgServerDatabaseName"'"
+                            }}')
+                        else  
+                          echolog "[checkExternalPostgres] Skipping Configuration for database $extPgServerDatabaseName..."
+                        fi
+                    done
+                fi
+            fi
+        done
+    else
+      echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
+      export STEP_CONFIGURE_POSTGRES_JSON=""
+    fi
   fi
 }
 
@@ -2215,6 +2309,11 @@ if [ "${IS_UPDATE}" != "True" ]; then
   wait_for_fn_result downloadNfsVmPrivateKey
 fi
 
+if [ "${IS_UPDATE}" == "True" ]; then
+  LDAP_CONFIG_MAP_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' --raw-output | head -n 1)
+  LDAP_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get configmap ${LDAP_CONFIG_MAP_NAME} -o jsonpath='{.data.LDAP_ADMIN_PASSWORD}')
+fi
+
 # Create Viya namespace
 wait_for_fn_result createViyaNamespace
 
@@ -2356,9 +2455,9 @@ wait_for_fn_result createSupersetNamespace
 wait_for_fn_result deploySuperset
 
 #Fix Viya Admin
-if [ "${IS_UPDATE}" != "True" ]; then
+#if [ "${IS_UPDATE}" != "True" ]; then
   wait_for_fn_result fixViyaAdmin
-fi
+#fi
 
 # Register Ext Client
 wait_for_fn_with_str_result getAccessToken ACCESS_TOKEN
@@ -2395,7 +2494,9 @@ wait_for_fn_result waitForCirrusDeployments
 wait_for_fn_result addUsers
 
 # Load Cirrus Data
-wait_for_fn_result loadCirrusData
+if [ "${IS_UPDATE}" != "True" ]; then
+  wait_for_fn_result loadCirrusData
+fi
 
 wait_for_fn_result disableNonEssentialAppsRunTime
 wait_for_fn_result disableCAS
@@ -2404,6 +2505,13 @@ wait_for_fn_result disableCAS
 # Upload the assets (again, if modified), outputs, certs and logswait_for_fn_result zipDeployAssets
 wait_for_fn_result uploadDeployAssets
 # wait_for_fn_result uploadOutputs
+  az storage blob upload \
+    --account-name "${STORAGE_ACCOUNT}" \
+    --account-key "${STORAGE_ACCOUNT_KEY}" \
+    --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
+    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem" \
+    --overwrite \
+    --debug
 wait_for_fn_result uploadCaCertificate
 wait_for_fn_result uploadLogfile
 
