@@ -2471,7 +2471,9 @@ wait_for_fn_result waitForCirrusDeployments
 wait_for_fn_result addUsers
 
 # Load Cirrus Data
-wait_for_fn_result loadCirrusData
+if [ "${IS_UPDATE}" != "True" ]; then
+  wait_for_fn_result loadCirrusData
+fi
 
 wait_for_fn_result disableNonEssentialAppsRunTime
 wait_for_fn_result disableCAS
