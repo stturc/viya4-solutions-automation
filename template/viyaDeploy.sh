@@ -127,13 +127,7 @@ EXT_CLIENT_ID=ext.api.cli
 
 #LDAP and KEYCLOAK variables
 UUID=$(cat /proc/sys/kernel/random/uuid)
-
-if [ "${IS_UPDATE}" == "True" ]; then
-  LDAP_ADMIN_PASSWORD=$(kubectl -n sas-viya get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' | head -n 1)
-else
-  LDAP_ADMIN_PASSWORD=$(openssl rand -base64 32)
-fi
-
+LDAP_ADMIN_PASSWORD=$(openssl rand -base64 32)
 KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -base64 32)
 SASBOOT_ADMIN_PASSWORD=$(openssl rand -hex 16)
 KEYCLOAK_STORE_PASSWORD=$(openssl rand -hex 16)
@@ -2290,6 +2284,11 @@ wait_for_fn_with_str_result getStorageAccountKey STORAGE_ACCOUNT_KEY
 # Download NFS VM Private Key
 if [ "${IS_UPDATE}" != "True" ]; then
   wait_for_fn_result downloadNfsVmPrivateKey
+fi
+
+if [ "${IS_UPDATE}" == "True" ]; then
+  LDAP_CONFIG_MAP_NAME=$(kubectl get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' | head -n 1)
+  LDAP_ADMIN_PASSWORD=$(kubectl get configmap ${LDAP_CONFIG_MAP_NAME} -o jsonpath='{.data.LDAP_ADMIN_PASSWORD}')
 fi
 
 # Create Viya namespace
