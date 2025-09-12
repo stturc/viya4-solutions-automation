@@ -127,7 +127,13 @@ EXT_CLIENT_ID=ext.api.cli
 
 #LDAP and KEYCLOAK variables
 UUID=$(cat /proc/sys/kernel/random/uuid)
-LDAP_ADMIN_PASSWORD=$(openssl rand -base64 32)
+
+if [ "${IS_UPDATE}" == "True" ]; then
+  LDAP_ADMIN_PASSWORD=$(kubectl -n sas-viya get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' | head -n 1)
+else
+  LDAP_ADMIN_PASSWORD=$(openssl rand -base64 32)
+fi
+
 KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -base64 32)
 SASBOOT_ADMIN_PASSWORD=$(openssl rand -hex 16)
 KEYCLOAK_STORE_PASSWORD=$(openssl rand -hex 16)
@@ -2427,9 +2433,9 @@ wait_for_fn_result createSupersetNamespace
 wait_for_fn_result deploySuperset
 
 #Fix Viya Admin
-if [ "${IS_UPDATE}" != "True" ]; then
+#if [ "${IS_UPDATE}" != "True" ]; then
   wait_for_fn_result fixViyaAdmin
-fi
+#fi
 
 # Register Ext Client
 wait_for_fn_with_str_result getAccessToken ACCESS_TOKEN
