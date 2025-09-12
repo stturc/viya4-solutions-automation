@@ -2287,8 +2287,8 @@ if [ "${IS_UPDATE}" != "True" ]; then
 fi
 
 if [ "${IS_UPDATE}" == "True" ]; then
-  LDAP_CONFIG_MAP_NAME=$(kubectl get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' | head -n 1)
-  LDAP_ADMIN_PASSWORD=$(kubectl get configmap ${LDAP_CONFIG_MAP_NAME} -o jsonpath='{.data.LDAP_ADMIN_PASSWORD}')
+  LDAP_CONFIG_MAP_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' --raw-output | head -n 1)
+  LDAP_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get configmap ${LDAP_CONFIG_MAP_NAME} -o jsonpath='{.data.LDAP_ADMIN_PASSWORD}')
 fi
 
 # Create Viya namespace
