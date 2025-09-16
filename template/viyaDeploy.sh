@@ -1060,6 +1060,11 @@ function zipDeployAssets {
 
 # Upload assets
 function uploadDeployAssets {
+  echolog "Storage account is ${STORAGE_ACCOUNT}"
+  echolog "Storage account key is ${STORAGE_ACCOUNT_KEY}"
+  echolog "Storage account container is ${STORAGE_ACCOUNT_CONTAINER}"
+  echolog "home  is ${HOME}"
+
   az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
