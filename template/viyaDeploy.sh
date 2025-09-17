@@ -1084,12 +1084,18 @@ function uploadOutputs {
 
 # Upload CA certificate
 function uploadCaCertificate {
+  echolog "[uploadCaCertificate] Storage account is ${STORAGE_ACCOUNT}"
+  echolog "[uploadCaCertificate] Storage account key is ${STORAGE_ACCOUNT_KEY}"
+  echolog "[uploadCaCertificate] Storage account container is ${STORAGE_ACCOUNT_CONTAINER}"
+  echolog "[uploadCaCertificate] home  is ${HOME}"
+  
   az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
     --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
     --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
     --overwrite
+    --debug
 }
 
 # Upload logfile
