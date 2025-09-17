@@ -1089,6 +1089,7 @@ function uploadCaCertificate {
     --account-key "${STORAGE_ACCOUNT_KEY}" \
     --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
     --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
+    --overwrite
 }
 
 # Upload logfile
@@ -1519,6 +1520,7 @@ function waitForCirrusDeployments {
                 kubectl get jobs -n "${V4_CFG_NAMESPACE}" -o json |
                 jq -r --arg solution "$cirrus_solution" '
                   .items[]
+                  | sort_by(.metadata.creationTimestamp) | reverse
                   | select(.metadata.annotations["sas.com/component-name"] == $solution)
                   | .metadata.name
                 ' | sed 's/[][]//g' | tr -d '\r' && printf '\0'
