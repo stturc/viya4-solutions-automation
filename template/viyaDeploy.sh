@@ -2496,7 +2496,6 @@ wait_for_fn_result disableCAS
 # Upload the assets (again, if modified), outputs, certs and logswait_for_fn_result zipDeployAssets
 wait_for_fn_result uploadDeployAssets
 # wait_for_fn_result uploadOutputs
-wait_for_fn_result uploadCaCertificate
   az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
@@ -2504,6 +2503,7 @@ wait_for_fn_result uploadCaCertificate
     --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
     --overwrite
     --debug
+wait_for_fn_result uploadCaCertificate
 wait_for_fn_result uploadLogfile
 
 echolog "---"
