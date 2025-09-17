@@ -2497,6 +2497,13 @@ wait_for_fn_result disableCAS
 wait_for_fn_result uploadDeployAssets
 # wait_for_fn_result uploadOutputs
 wait_for_fn_result uploadCaCertificate
+  az storage blob upload \
+    --account-name "${STORAGE_ACCOUNT}" \
+    --account-key "${STORAGE_ACCOUNT_KEY}" \
+    --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
+    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
+    --overwrite
+    --debug
 wait_for_fn_result uploadLogfile
 
 echolog "---"
