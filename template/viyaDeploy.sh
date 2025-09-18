@@ -1144,78 +1144,45 @@ function checkExternalPostgres {
     
     extPG_IDS_name=${RG/-mrg/-extpg-ids}
     extPG_CDS_name=${RG/-mrg/-extpg-cds}
-    
-    
-      LDAP_CONFIG_MAP_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' --raw-output | head -n 1)
-  LDAP_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get configmap ${LDAP_CONFIG_MAP_NAME} -o jsonpath='{.data.LDAP_ADMIN_PASSWORD}')
-  
-  
 
-    if [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_IDS_name'] | length(@)") > 0 ]] && [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_CDS_name'] | length(@)") > 0 ]]; then
+    if [[ $(az postgres flexible-server list --resource-group $RG --query "[?name=='$extPG_IDS_name'] | length(@)") > 0 ]] && [[ $(az postgres flexible-server list --resource-group $RG --query "[?name=='$extPG_CDS_name'] | length(@)") > 0 ]]; then
       echolog "[checkExternalPostgres] External postgres instances exists"
-    else
-      echolog "[checkExternalPostgres] External postgres instances doesn't exist"
-    fi
-    
-    STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
 
-    extPgConfig=$(echo "$EXTPG_CONFIG_B64" | /bin/base64 -d )
-    echolog "[checkExternalPostgres] extPgConfig: $extPgConfig"
-    extPgServers=$(echo "$extPgConfig" | jq -r '.')
-    echolog "[checkExternalPostgres] extPgServers: $extPgServers"
-    extPgServersLength=$(echo "$extPgServers" | jq -r 'length')
-    echolog "[checkExternalPostgres] extPgServersLength: $extPgServersLength"
-    if [ "$extPgServersLength" -ne 0 ]
-    then
-        for ix_tmp in $(seq 1 $extPgServersLength)
-        do
-            ix=$((ix_tmp-1))
-            extPgServer=$(echo "$extPgServers" | jq -r ".[$ix]")
-            extPgServerName=$(echo "$extPgServer" | jq -r ".ServerName")
-            extPgServerAdminLogin=$(echo "$extPgServer" | jq -r ".AdministratorLogin")
-            extPgServerAdminPassword=$(echo "$extPgServer" | jq -r ".AdministratorLoginPassword")
-            extPgServerRole=$(echo "$extPgServer" | jq -r ".Role")
-            extPgServerDatabases=$(echo "$extPgServer" | jq -r ".Databases")
-            echolog "[checkExternalPostgres] Check external Postgres server existence: $extPgServerName"
-            if az postgres flexible-server show -g ${RG} -n ${extPgServerName} > /dev/null 2>&1
-            then  
-                echolog "[checkExternalPostgres] External PostgreSQL server detected ($extPgServerName)"
-                EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPgServerName} -o json)
-                EXTPG_FQDN=$(echo "$EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
-                EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPgServerName} | jq -r ".value")
+      CDS_POSTGRES_SECRET_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get secrets -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("cds-postgres-platform-postgres-user"; "i"))' --raw-output | head -n 1)
+      CDS_ADMIN_USER=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${CDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.username}' | /bin/base64 -d)
+      CDS_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${CDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.password}' | /bin/base64 -d)
+      CDS_EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPG_CDS_name} -o json)
+      CDS_EXTPG_FQDN=$(echo "$CDS_EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
+      CDS_EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPG_CDS_name} | jq -r ".value")
 
-                extPgServerDatabasesLength=$(echo "$extPgServerDatabases" | jq -r 'length')
-                if [ "$extPgServerDatabasesLength" -ne 0 ]
-                then
-                    for jx_tmp in $(seq 1 $extPgServerDatabasesLength)
-                    do
-                        jx=$((jx_tmp-1))
-                        extPgServerDatabase=$(echo "$extPgServerDatabases" | jq -r ".[$jx]")
-                        extPgServerDatabaseName=$(echo "$extPgServerDatabase" | jq -r ".name")
-                        extPgServerDatabaseDefault=$(echo "$extPgServerDatabase" | jq -r ".default")
-                        echolog "[checkExternalPostgres] Creating database $extPgServerDatabaseName..."
-                        #az postgres flexible-server db create -g ${RG} -s ${extPgServerName} --database-name $extPgServerDatabaseName
+      IDS_POSTGRES_SECRET_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get secrets -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("default-platform-postgres-user"; "i"))' --raw-output | head -n 1)
+      IDS_ADMIN_USER=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${IDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.username}' | /bin/base64 -d)
+      IDS_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${IDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.password}' | /bin/base64 -d)
+      IDS_EXTPG_JSON=$(az postgres flexible-server show -g ${RG} -n ${extPG_IDS_name} -o json)
+      IDS_EXTPG_FQDN=$(echo "$IDS_EXTPG_JSON" | jq -r ".fullyQualifiedDomainName")
+      IDS_EXTPG_PORT=$(az postgres flexible-server parameter show -n port -g ${RG} -s ${extPG_IDS_name} | jq -r ".value")
 
-                        if [ "$extPgServerDatabaseDefault" == "Y" ]
-                        then
-                          echolog "[checkExternalPostgres] Configuring database $extPgServerDatabaseName..."
-                          STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
-                            { "'"$extPgServerRole"'": {
-                              "internal": false, 
-                              "admin": "'"$extPgServerAdminLogin"'", 
-                              "password": "'"$extPgServerAdminPassword"'", 
-                              "fqdn": "'"$EXTPG_FQDN"'", 
-                              "ssl_enforcement_enabled": true, 
-                              "server_port": "'"$EXTPG_PORT"'", 
-                              "database": "'"$extPgServerDatabaseName"'"
-                            }}')
-                        else  
-                          echolog "[checkExternalPostgres] Skipping Configuration for database $extPgServerDatabaseName..."
-                        fi
-                    done
-                fi
-            fi
-        done
+      STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
+      STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
+        { "'"cds-postgres"'": {
+          "internal": false, 
+          "admin": "'"$CDS_ADMIN_USER"'", 
+          "password": "'"$CDS_ADMIN_PASSWORD"'", 
+          "fqdn": "'"$CDS_EXTPG_FQDN"'", 
+          "ssl_enforcement_enabled": true, 
+          "server_port": "'"$CDS_EXTPG_PORT"'", 
+          "database": "'"SharedServices"'"
+        }}')
+      STEP_CONFIGURE_POSTGRES_JSON=$(echo "$STEP_CONFIGURE_POSTGRES_JSON" | jq '. + 
+        { "'"default"'": {
+          "internal": false, 
+          "admin": "'"$IDS_ADMIN_USER"'", 
+          "password": "'"$IDS_ADMIN_PASSWORD"'", 
+          "fqdn": "'"$IDS_EXTPG_FQDN"'", 
+          "ssl_enforcement_enabled": true, 
+          "server_port": "'"$IDS_EXTPG_PORT"'", 
+          "database": "'"SharedServices"'"
+        }}')
     else
       echolog "[checkExternalPostgres] External PostgreSQL server not detected. Proceeding with internal database..."
       export STEP_CONFIGURE_POSTGRES_JSON=""
