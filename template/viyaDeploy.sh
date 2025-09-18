@@ -1154,13 +1154,13 @@ function checkExternalPostgres {
     # Detect if external postgres is part of deployment
     echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
     
-    postgres_object_name=mapp-17777532547-4-extpg-cds
-    posgres_resource_group=mapp-17777532547-4-mrg
-    if [[ $(az vm list --resource-group $posgres_resource_group --query "[?name=='$postgres_object_name'] | length(@)") > 0 ]]
-    then
-      echolog "[checkExternalPostgres] Postgres exists"
+    extPG_IDS_name=${RG/-mrg/-nfs-vm}-extpg-ids
+    extPG_CDS_name=${RG/-mrg/-nfs-vm}-extpg-cds
+
+    if [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_IDS_name'] | length(@)") > 0 ]] && [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_CDS_name'] | length(@)") > 0 ]]; then
+      echolog "[checkExternalPostgres] External postgres instances exists"
     else
-      echolog "[checkExternalPostgres] Postgres doesn't exist"
+      echolog "[checkExternalPostgres] External postgres instances doesn't exist"
     fi
     
     STEP_CONFIGURE_POSTGRES_JSON=$(jq -n '{}')
