@@ -1093,9 +1093,8 @@ function uploadCaCertificate {
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
     --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
-    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
+    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem" \
     --overwrite
-    --debug
 }
 
 # Upload logfile
@@ -2500,8 +2499,8 @@ wait_for_fn_result uploadDeployAssets
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
     --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
-    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem"
-    --overwrite
+    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem" \
+    --overwrite \
     --debug
 wait_for_fn_result uploadCaCertificate
 wait_for_fn_result uploadLogfile
