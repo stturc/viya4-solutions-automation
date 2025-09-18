@@ -219,9 +219,7 @@ function getKubeconfig {
 
 # Get storage account key
 function getStorageAccountKey {
-  az storage account keys list -g "${RG}" -n "${STORAGE_ACCOUNT}" --query "[0].value" -o tsv
   STORAGE_ACCOUNT_KEY=$(az storage account keys list -g "${RG}" -n "${STORAGE_ACCOUNT}" --query "[0].value" -o tsv)
-  echolog "Storage account key is ${STORAGE_ACCOUNT_KEY}"
 }
 
 function retrieveNFSServerInfo {
@@ -1060,11 +1058,6 @@ function zipDeployAssets {
 
 # Upload assets
 function uploadDeployAssets {
-  echolog "Storage account is ${STORAGE_ACCOUNT}"
-  echolog "Storage account key is ${STORAGE_ACCOUNT_KEY}"
-  echolog "Storage account container is ${STORAGE_ACCOUNT_CONTAINER}"
-  echolog "home  is ${HOME}"
-
   az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
@@ -1084,11 +1077,6 @@ function uploadOutputs {
 
 # Upload CA certificate
 function uploadCaCertificate {
-  echolog "[uploadCaCertificate] Storage account is ${STORAGE_ACCOUNT}"
-  echolog "[uploadCaCertificate] Storage account key is ${STORAGE_ACCOUNT_KEY}"
-  echolog "[uploadCaCertificate] Storage account container is ${STORAGE_ACCOUNT_CONTAINER}"
-  echolog "[uploadCaCertificate] home  is ${HOME}"
-  
   az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --account-key "${STORAGE_ACCOUNT_KEY}" \
@@ -1154,8 +1142,14 @@ function checkExternalPostgres {
     # Detect if external postgres is part of deployment
     echolog "[checkExternalPostgres] Check existence of external PostgreSQL server"
     
-    extPG_IDS_name=${RG/-mrg/-nfs-vm}-extpg-ids
-    extPG_CDS_name=${RG/-mrg/-nfs-vm}-extpg-cds
+    extPG_IDS_name=${RG/-mrg/-extpg-ids}
+    extPG_CDS_name=${RG/-mrg/-extpg-cds}
+    
+    
+      LDAP_CONFIG_MAP_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get configmaps -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("openldap-bootstrap-config"; "i"))' --raw-output | head -n 1)
+  LDAP_ADMIN_PASSWORD=$(kubectl -n ${V4_CFG_NAMESPACE} get configmap ${LDAP_CONFIG_MAP_NAME} -o jsonpath='{.data.LDAP_ADMIN_PASSWORD}')
+  
+  
 
     if [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_IDS_name'] | length(@)") > 0 ]] && [[ $(az vm list --resource-group $RG --query "[?name=='$extPG_CDS_name'] | length(@)") > 0 ]]; then
       echolog "[checkExternalPostgres] External postgres instances exists"
@@ -2455,9 +2449,7 @@ wait_for_fn_result createSupersetNamespace
 wait_for_fn_result deploySuperset
 
 #Fix Viya Admin
-#if [ "${IS_UPDATE}" != "True" ]; then
-  wait_for_fn_result fixViyaAdmin
-#fi
+wait_for_fn_result fixViyaAdmin
 
 # Register Ext Client
 wait_for_fn_with_str_result getAccessToken ACCESS_TOKEN
@@ -2505,13 +2497,6 @@ wait_for_fn_result disableCAS
 # Upload the assets (again, if modified), outputs, certs and logswait_for_fn_result zipDeployAssets
 wait_for_fn_result uploadDeployAssets
 # wait_for_fn_result uploadOutputs
-  az storage blob upload \
-    --account-name "${STORAGE_ACCOUNT}" \
-    --account-key "${STORAGE_ACCOUNT_KEY}" \
-    --container-name "${STORAGE_ACCOUNT_CONTAINER}" \
-    --file "${HOME}/ca-certificate/${V4_CFG_INGRESS_FQDN}-ca.pem" \
-    --overwrite \
-    --debug
 wait_for_fn_result uploadCaCertificate
 wait_for_fn_result uploadLogfile
 
