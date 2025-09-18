@@ -1146,7 +1146,7 @@ function checkExternalPostgres {
     extPG_CDS_name=${RG/-mrg/-extpg-cds}
 
     if [[ $(az postgres flexible-server list --resource-group $RG --query "[?name=='$extPG_IDS_name'] | length(@)") > 0 ]] && [[ $(az postgres flexible-server list --resource-group $RG --query "[?name=='$extPG_CDS_name'] | length(@)") > 0 ]]; then
-      echolog "[checkExternalPostgres] External postgres instances exists"
+      echolog "[checkExternalPostgres] External postgres instances exist"
 
       CDS_POSTGRES_SECRET_NAME=$(kubectl -n ${V4_CFG_NAMESPACE} get secrets -o json | jq '.items | sort_by(.metadata.creationTimestamp) | reverse | .[].metadata.name | select(test("cds-postgres-platform-postgres-user"; "i"))' --raw-output | head -n 1)
       CDS_ADMIN_USER=$(kubectl -n ${V4_CFG_NAMESPACE} get secret ${CDS_POSTGRES_SECRET_NAME} -o jsonpath='{.data.username}' | /bin/base64 -d)
