@@ -109,7 +109,8 @@ jobs:
             --description "${mapp_def_description}" \
             --authorizations "${group_id}:${role_id}" \
             --package-file-uri "$package_sas_uri" \
-            --tags resourceowner="${resource_owner}" | jq .id | sed 's/"//g')
+            --tags resourceowner="${resource_owner}" | jq .id | sed 's/"//g') \
+            --deployment-mode "Incremental"
           echo "mapp_def_id=$mapp_def_id"  
           echo "mapp_def_name=$mapp_def_name" >> $GITHUB_OUTPUT
           echo "::endgroup::"
