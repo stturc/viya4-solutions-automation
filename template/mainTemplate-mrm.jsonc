@@ -1051,7 +1051,7 @@
         },
         "sasViyaJumpIp": {
             "type": "string",
-            "value": "[if(not(variables('isUpdate')), reference(variables('jumpDeploymentName')).outputs.publicIp.value, json('empty'))]"
+            "value": "[if(not(variables('isUpdate')), reference(variables('jumpDeploymentName')).outputs.publicIp.value, json('null'))]"
         },
         "sasViyaCaCertificateBase64": {
            "type": "string",
