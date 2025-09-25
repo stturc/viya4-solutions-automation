@@ -2244,6 +2244,9 @@ if [ "${IS_UPDATE}" == "True" ]; then
   if [[ -z "$CURRENT_IPS" ]]; then
     MERGED="$DS_IP"
   else
+    if [[ "${CURRENT_IPS: -1}" == "," ]]; then
+      CURRENT_IPS="${CURRENT_IPS%,}"
+    fi
     # Check if IP already exists
     if echo "$CURRENT_IPS" | grep -qw "$DS_IP"; then
       echolog "IP $DS_IP is already authorized. Nothing to do."
