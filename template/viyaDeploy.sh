@@ -2238,7 +2238,7 @@ if [ "${IS_UPDATE}" == "True" ]; then
     --resource-group "$RG" \
     --name "$AKS" \
     --query "apiServerAccessProfile.authorizedIpRanges" \
-    -o tsv | tr '\t' ',')
+    -o tsv | tr '\n' ',')
   
   echolog "Found current IPs of ${CURRENT_IPS}"
   if [[ -z "$CURRENT_IPS" ]]; then
@@ -2251,7 +2251,7 @@ if [ "${IS_UPDATE}" == "True" ]; then
     fi
     MERGED="$CURRENT_IPS,$DS_IP"
   fi
-  echolog "Updating authorized IP ranges: $MERGED"
+  echolog "Updating current AKS API server authorized IP ranges to: $MERGED"
 
   az aks update \
     --resource-group "$RG" \
