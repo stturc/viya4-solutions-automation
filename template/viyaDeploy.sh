@@ -2237,8 +2237,10 @@ if [ "${IS_UPDATE}" == "True" ]; then
   CURRENT_IPS=$(az aks show \
     --resource-group "$RG" \
     --name "$AKS" \
-    --query "apiServerAccessProfile.authorizedIPRanges" \
+    --query "apiServerAccessProfile.authorizedIpRanges" \
     -o tsv | tr '\t' ',')
+  
+  echolog "Found current IPs of ${CURRENT_IPS}"
   if [[ -z "$CURRENT_IPS" ]]; then
     MERGED="$DS_IP"
   else
@@ -2256,7 +2258,7 @@ if [ "${IS_UPDATE}" == "True" ]; then
     --name "$AKS_NAME" \
     --api-server-authorized-ip-ranges "$MERGED"
 
-  echo "Successfully updated AKS API server authorized IP ranges."
+  echolog "Successfully updated AKS API server authorized IP ranges."
 fi
 
 # Get managed users Kubeconfig
