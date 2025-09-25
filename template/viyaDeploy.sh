@@ -2259,7 +2259,7 @@ if [ "${IS_UPDATE}" == "True" ]; then
   az aks update \
     --resource-group "$RG" \
     --name "$AKS_NAME" \
-    --api-server-authorized-ip-ranges "$MERGED"
+    --api-server-authorized-ip-ranges "$MERGED" >>$LOGFILE 2>&1
 
   echolog "Successfully updated AKS API server authorized IP ranges."
 fi
