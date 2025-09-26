@@ -2247,7 +2247,7 @@ if [ "${IS_UPDATE}" == "True" ]; then
       echolog "IP $CURRENT_OUTBOUND_IP is already authorized. Nothing to do."
       exit 0
     fi
-    MERGED="$CURRENT_IPS,$CURRENT_OUTBOUND_IP"
+    MERGED="$CURRENT_IPS,$CURRENT_OUTBOUND_IP/32"
   fi
   echolog "Updating current AKS API server authorized IP ranges to: $MERGED"
 
