@@ -203,7 +203,7 @@
         }
     },
     "variables": {
-        "azCliVersion": "2.37.0",
+        "azCliVersion": "2.56.0",
         "kubernetesMajorVersion": "1.30",
         "identityName":  "[concat(parameters('deploymentName'),'-identity')]",
         
