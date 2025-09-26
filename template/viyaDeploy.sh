@@ -2227,13 +2227,8 @@ wait_for_fn_result downloadKubectl
 chmod u+x /usr/local/bin/kubectl
 
 if [ "${IS_UPDATE}" == "True" ]; then
-  # echolog "Retrieve IP address of container associated with deployment script"
-  # DS_IP=$(az resource show \
-  # --ids "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RG/providers/Microsoft.Resources/deploymentScripts/${AKS/-aks/-ds-viya-deploy}" \
-  # --query "properties.containerConfiguration.containerGroupProperties.ipAddress.ip")
-  # echolog "DS_IP=${DS_IP}"
-
-  DS_IP="0.0.0.0/0"
+  apk -U add curl
+  CURRENT_OUTBOUND_IP=$(curl ipinfo.io/ip)
   CURRENT_IPS=$(az aks show \
     --resource-group "$RG" \
     --name "$AKS" \
@@ -2242,17 +2237,17 @@ if [ "${IS_UPDATE}" == "True" ]; then
   
   echolog "Found current IPs of ${CURRENT_IPS}"
   if [[ -z "$CURRENT_IPS" ]]; then
-    MERGED="$DS_IP"
+    MERGED="$CURRENT_OUTBOUND_IP"
   else
     if [[ "${CURRENT_IPS: -1}" == "," ]]; then
       CURRENT_IPS="${CURRENT_IPS%,}"
     fi
     # Check if IP already exists
-    if echo "$CURRENT_IPS" | grep -qw "$DS_IP"; then
-      echolog "IP $DS_IP is already authorized. Nothing to do."
+    if echo "$CURRENT_IPS" | grep -qw "$CURRENT_OUTBOUND_IP"; then
+      echolog "IP $CURRENT_OUTBOUND_IP is already authorized. Nothing to do."
       exit 0
     fi
-    MERGED="$CURRENT_IPS,$DS_IP"
+    MERGED="$CURRENT_IPS,$CURRENT_OUTBOUND_IP"
   fi
   echolog "Updating current AKS API server authorized IP ranges to: $MERGED"
 
