@@ -2252,6 +2252,8 @@ if [ "${IS_UPDATE}" == "True" ]; then
   echolog "Updating current AKS API server authorized IP ranges to: $MERGED"
 
   az aks update -g ${RG} -n ${AKS} --debug --api-server-authorized-ip-ranges "${MERGED}" >>$LOGFILE 2>&1
+  az storage account update -g ${RG} -n ${STORAGE_ACCOUNT} --default-action Allow
+
 
   echolog "Successfully updated AKS API server authorized IP ranges."
 fi
