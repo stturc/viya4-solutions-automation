@@ -1014,7 +1014,7 @@
                    "identityName": { "value": "[variables('identityName')]" }, 
                    "location": { "value": "[parameters('location')]" }, 
                    "aksName": { "value": "[variables('aksName')]" }, 
-                   "kubernetesVersion": { "value": "1.30.14" }, 
+                   "kubernetesVersion": { "value": "[reference(variables('kubernetesVersionScriptName')).outputs.kubernetesVersion]" }, 
                    "v4CfgNamespace": { "value": "[variables('v4CfgNamespace')]" }, 
                    "v4CfgRwxFilestorePath": { "value": "[variables('v4CfgRwxFilestorePath')]" }, 
                    "v4CfgIngressDnsPrefix": { "value": "[parameters('deploymentPrefix')]" }, 
