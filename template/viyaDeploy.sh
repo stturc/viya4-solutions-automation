@@ -2229,33 +2229,31 @@ chmod u+x /usr/local/bin/kubectl
 if [ "${IS_UPDATE}" == "True" ]; then
   apk -U add curl
   CURRENT_OUTBOUND_IP=$(curl ipinfo.io/ip)
-  CURRENT_IPS=$(az aks show \
+  CURRENT_AUTHORIZED_IPS=$(az aks show \
     --resource-group "$RG" \
     --name "$AKS" \
     --query "apiServerAccessProfile.authorizedIpRanges" \
     -o tsv | tr '\n' ',')
   
-  echolog "Found current IPs of ${CURRENT_IPS}"
-  if [[ -z "$CURRENT_IPS" ]]; then
+  echolog "Found current IPs of ${CURRENT_AUTHORIZED_IPS}"
+  if [[ -z "$CURRENT_AUTHORIZED_IPS" ]]; then
     MERGED="$CURRENT_OUTBOUND_IP"
   else
-    if [[ "${CURRENT_IPS: -1}" == "," ]]; then
-      CURRENT_IPS="${CURRENT_IPS%,}"
+    if [[ "${CURRENT_AUTHORIZED_IPS: -1}" == "," ]]; then
+      CURRENT_AUTHORIZED_IPS="${CURRENT_AUTHORIZED_IPS%,}"
     fi
     # Check if IP already exists
-    if echo "$CURRENT_IPS" | grep -qw "$CURRENT_OUTBOUND_IP"; then
+    if echo "$CURRENT_AUTHORIZED_IPS" | grep -qw "$CURRENT_OUTBOUND_IP"; then
       echolog "IP $CURRENT_OUTBOUND_IP is already authorized. Nothing to do."
       exit 0
     fi
-    MERGED="$CURRENT_IPS,$CURRENT_OUTBOUND_IP/32"
+    MERGED="$CURRENT_AUTHORIZED_IPS,$CURRENT_OUTBOUND_IP/32"
   fi
   echolog "Updating current AKS API server authorized IP ranges to: $MERGED"
 
   az aks update -g ${RG} -n ${AKS} --debug --api-server-authorized-ip-ranges "${MERGED}" >>$LOGFILE 2>&1
   az storage account update -g ${RG} -n ${STORAGE_ACCOUNT} --default-action Allow
-
-
-  echolog "Successfully updated AKS API server authorized IP ranges."
+  echolog "Successfully updated AKS API server authorized IP ranges and storage account default action."
 fi
 
 # Get managed users Kubeconfig
@@ -2469,46 +2467,23 @@ wait_for_fn_result uploadLogfile
 echolog "---"
 # lock down AKS API Server and Storage Account if we need to
 if [ "${USE_IP_ALLOWLIST}" == "True" ]; then
-  if [ "${IS_UPDATE}" != "True" ]; then
-    echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, locking down deployment..."
-    applyAllowlist
-    echolog "Allow list applied..."
-  else
-    echolog "Get current list of authorized IPs"
-    CURRENT_IPS=$(az aks show \
-      --resource-group "$RG" \
-      --name "$AKS" \
-      --query "apiServerAccessProfile.authorizedIPRanges" \
-      -o tsv | tr '\t' ',')
-
-    if [[ -z "$CURRENT_IPS" ]]; then
-      echolog "No authorized IPs are currently set. Nothing to remove."
-    else
-      echolog "Current authorized IPs: $CURRENT_IPS"
-      if [ -n "$DS_IP" ]; then
-        echolog "Removing DS_IP: $DS_IP"
-        # Convert to array and filter out REMOVE_IP
-        NEW_IPS=$(echo "$CURRENT_IPS" | tr ',' '\n' | grep -vw "$DS_IP" | paste -sd "," -)
-
-        if [[ "$NEW_IPS" == "$CURRENT_IPS" ]]; then
-          echolog "IP $DS_IP not found in the current list. Nothing to do."
-        fi
-
-        echolog "Updating authorized IP ranges: $NEW_IPS"
-
-        az aks update \
-          --resource-group "$RG" \
-          --name "$AKS" \
-          --api-server-authorized-ip-ranges "$NEW_IPS"
-      else
-        echolog "DS_IP is empty. Nothing to do."
-      fi
-    fi
-  fi
+  echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, locking down deployment..."
+  applyAllowlist
+  echolog "Allow list applied..."
 else
-  echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, so we won't lock down deployment."
-fi
+  if [ "${IS_UPDATE}" != "True" ]; then
+    az aks update -g ${RG} -n ${AKS} --debug --api-server-authorized-ip-ranges "${CURRENT_AUTHORIZED_IPS}" >>$LOGFILE 2>&1
 
+    echolog "[applyAllowlist] Setting Storage Account Deny default action..."
+    wait_for_fn_result setStorageAccountDenyDefaultAction
+
+    echolog "[applyAllowlist] Adding Storage Account Network Rules..."
+    wait_for_fn_result addStorageAccountNetworkRules
+  fi
+  else
+    echolog "USE_IP_ALLOWLIST=${USE_IP_ALLOWLIST}, so we won't lock down deployment."
+  fi
+fi
 
 # Write output
 RESULT="{"
