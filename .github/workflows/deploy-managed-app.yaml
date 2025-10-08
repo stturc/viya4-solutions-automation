@@ -4,6 +4,42 @@
 name: Deploy Managed Application
 
 on:
+  workflow_call:
+    inputs:
+      viya_solution_name:
+        description: 'SAS Solution to deploy'
+        required: true
+        default: 'SAS Model Risk Management'
+        type: string
+      aks_cluster_sizing:
+        description: 'AKS Cluster Sizing'
+        required: true
+        default: 'ProdSmall'
+        type: string
+      viya_order_sas_uri:
+        description: 'SAS URI for Viya Order'
+        required: true
+        type: string
+      viya_admin_password:
+        description: 'Viya Admin Password'
+        required: true
+        type: string
+      ssh_public_key:
+        description: 'SSH Public Key for the deployment'
+        required: true
+        type: string
+
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+        
+      additional_parameters:
+        description: 'Additional Parameters for the deployment'
+        required: false
+        type: string
+        default: '{}'
+
   workflow_dispatch:
     inputs:
       viya_solution_name:
@@ -57,6 +93,10 @@ jobs:
       json_input: ${{ inputs.additional_parameters }}
       extracted_keys_with_defaults: |
         {
+          "mapp_rg_name": "mapp-${{ github.run_id }}-rg",
+          "mapp_def_name": "mappdef-${{ github.run_id }}",
+          "update_existing_deployment_mrg_name": "",
+
           "azure_admin_group_name": "",
           "azure_admin_group_role": "",
 
@@ -77,7 +117,6 @@ jobs:
           "package_version": "latest",
 
           "step_add_users": "5",
-
           "step_install_superset_flag": "N",
           "step_update_spec_cirrus_flag": "N",
           "step_update_spec_cas_flag": "N",
@@ -97,22 +136,22 @@ jobs:
       - determine-sas-solution
     uses: ./.github/workflows/retrieve-package.yaml
     with:
-      artifact_name: package
+      artifact_name: package-deploy-id3
       package_version: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).package_version }}
       viya_solution: ${{ needs.determine-sas-solution.outputs.viya_solution }}
 
-  download-and-upload-package-again:
-    needs: call-retrieve-package
-    uses: ./.github/workflows/download-and-upload-package-again.yaml
-    with:
-      input_package_name: package
-      output_package_name: package2
-      output_package_path: ${{ needs.call-retrieve-package.outputs.artifact_file_name }}
+#  download-and-upload-package-again:
+#    needs: call-retrieve-package
+#    uses: ./.github/workflows/download-and-upload-package-again.yaml
+#    with:
+#      input_package_name: package
+#      output_package_name: package2
+#      output_package_path: ${{ needs.call-retrieve-package.outputs.artifact_file_name }}
 
   call-create-storage-account-and-container:
     needs: 
       - call-retrieve-package
-      - download-and-upload-package-again
+#      - download-and-upload-package-again
       - parse-additional-parameters
     secrets: inherit
     uses: ./.github/workflows/create-storage-account-and-container.yaml
@@ -122,8 +161,9 @@ jobs:
       storage_account_container_name: sac-${{github.run_id}}
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       environment: ${{ inputs.environment }}
-      artifact_name: package2
+      artifact_name: package-deploy-id3
       artifact_file_name: ${{ needs.call-retrieve-package.outputs.artifact_file_name }}
+#TODO fix artifact name
 
   call-create-managed-app-definition:
     needs: 
@@ -134,8 +174,8 @@ jobs:
     with:
       environment: ${{ inputs.environment }}
       package_sas_uri: ${{ needs.call-create-storage-account-and-container.outputs.package_sas_uri }}
-      mapp_rg_name: mapp-${{ github.run_id }}-rg
-      mapp_def_name: mappdef-${{ github.run_id }}
+      mapp_rg_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_rg_name }}
+      mapp_def_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_def_name }}
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       azure_admin_group_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_name }}
       azure_admin_group_role: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_role }}
@@ -148,10 +188,10 @@ jobs:
     uses: ./.github/workflows/create-managed-app.yaml
     with:
       environment: ${{ inputs.environment }}
-      mapp_rg_name: mapp-${{ github.run_id }}-rg
-      mapp_def_name: mappdef-${{ github.run_id }}
+      mapp_rg_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_rg_name }}
+      mapp_def_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_def_name }}
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
-      update_existing_deployment_mrg_name: ""
+      update_existing_deployment_mrg_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).update_existing_deployment_mrg_name }}
       aks_cluster_sizing: ${{ inputs.aks_cluster_sizing }}
       viya_order_sas_uri: ${{ inputs.viya_order_sas_uri }}
       viya_admin_password: ${{ inputs.viya_admin_password }}
