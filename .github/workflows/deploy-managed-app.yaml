@@ -136,7 +136,7 @@ jobs:
       - determine-sas-solution
     uses: ./.github/workflows/retrieve-package.yaml
     with:
-      artifact_name: package-deploy-id3
+      artifact_name: package-deploy-${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_def_name }}
       package_version: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).package_version }}
       viya_solution: ${{ needs.determine-sas-solution.outputs.viya_solution }}
 
@@ -161,7 +161,7 @@ jobs:
       storage_account_container_name: sac-${{github.run_id}}
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       environment: ${{ inputs.environment }}
-      artifact_name: package-deploy-id3
+      artifact_name: package-deploy-${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_def_name }}
       artifact_file_name: ${{ needs.call-retrieve-package.outputs.artifact_file_name }}
 #TODO fix artifact name
 
