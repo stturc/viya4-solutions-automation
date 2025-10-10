@@ -42,7 +42,10 @@ jobs:
           # ⬇️  single-quoted default so the expression parser is happy
           keys_to_b64='${{ inputs.keys_to_b64 }}'
           if [ -z "$keys_to_b64" ]; then
+            echo "Using default empty b64 keys"
             keys_to_b64="[]"
+          else
+            echo "Using provided b64 keys: $keys_to_b64"
           fi
 
           # Turn the b64 list into a bash array
