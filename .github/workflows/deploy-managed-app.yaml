@@ -39,6 +39,13 @@ on:
         required: false
         type: string
         default: '{}'
+    outputs:
+      mapp_rg_name:
+        description: Image references of all images built during packaging.
+        value: ${{ fromJSON(jobs.parse-additional-parameters.outputs.vars).mapp_rg_name }}
+      mapp_def_name:
+        description: DU file URLs for all DUs built during packaging.
+        value: ${{ fromJSON(jobs.parse-additional-parameters.outputs.vars).mapp_def_name }}
 
   workflow_dispatch:
     inputs:
