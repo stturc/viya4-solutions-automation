@@ -23,6 +23,7 @@ on:
 
 jobs:
   parse:
+    name: parse-additional-parameters
     runs-on: ubuntu-latest
     outputs:
       parsed_outputs: ${{ steps.extract.outputs.result }}

@@ -28,12 +28,10 @@ on:
         description: 'SSH Public Key for the deployment'
         required: true
         type: string
-
       environment:
         description: 'Environment to deploy to'
         required: true
         type: string
-        
       additional_parameters:
         description: 'Additional Parameters for the deployment'
         required: false
@@ -77,21 +75,18 @@ on:
         description: 'SSH Public Key for the deployment'
         required: true
         type: string
-
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'Azure - RiskCloudInfrastructure-Public Subscription'
+        default: 'Azure Subscription'
         type: choice
         options: 
-          - 'Azure - RiskCloudInfrastructure-Public Subscription'
-        
+          - 'Azure Subscription'
       additional_parameters:
         description: 'Additional Parameters for the deployment'
         required: false
         type: string
         default: '{}'
-        
 
 jobs:
   parse-additional-parameters:
