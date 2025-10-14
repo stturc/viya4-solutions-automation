@@ -100,6 +100,10 @@ The table below indicates which additional parameters are required
 | Azure Admin Group Role | azure_admin_group_role | No | see Environment Secrets | [link](#azure-managed-application-definition-authorizations) |
 | DNS suffix | step_add_users | No | see Environment Secrets | [link](#dns-suffix) |
 | Package version | package_version | No | `latest` | [link](#package-version) |
+| Azure Storage Container Artifact Name | artifact_name | No | `package-deploy` | [link](#azure-storage-container-artifact-name) |
+| Managed Application Resource Group Name | mapp_rg_name | No | `mapp-<github.run_id>-rg` | [link](#managed-application-resource-group-name) |
+| Managed Application Definition Name | mapp_def_name | No | `mappdef-<github.run_id>` | [link](#managed-application-definition-name) |
+| Update Existing Deployment Managed Resource Group Name | update_existing_deployment_mrg_name | No | | [link](#update-existing-deployment-managed-resource-group-name) |
 
 ---
 ##### IP allow list
@@ -228,4 +232,25 @@ EOF
 
 
 ---
+##### Azure Storage Container Artifact Name
+By default, the automation uses the `package-deploy` name to upload the artifact to the storage container. You may override this by setting this variable.
+
+---
+
+##### Managed Application Resource Group Name
+By default, the automation uses github.run_id to format a default name for the resource group that will hold all artifacts for the managed application. You may override this by setting this variable.
+
+---
+
+##### Managed Application Definition Name
+By default, the automation uses github.run_id to format a default name for the managed application. You may override this by setting this variable.
+
+---
+
+##### Update Existing Deployment Managed Resource Group Name
+By default, the automation will assume this is a new deployment request. You may update an existing deployment by passing in the managed resource group name to this variable.
+
+---
+
+
 [← Back to README](../README.md)

@@ -117,6 +117,7 @@ jobs:
           "ip_allow_list": "",
 
           "package_version": "latest",
+          "artifact_name": "package-deploy",
 
           "step_add_users": "5",
           "step_install_superset_flag": "N",
@@ -138,7 +139,7 @@ jobs:
       - determine-sas-solution
     uses: ./.github/workflows/retrieve-package.yaml
     with:
-      artifact_name: package-deploy-${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_def_name }}
+      artifact_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).artifact_name }}
       package_version: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).package_version }}
       viya_solution: ${{ needs.determine-sas-solution.outputs.viya_solution }}
 
@@ -163,9 +164,8 @@ jobs:
       storage_account_container_name: sac-${{github.run_id}}
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       environment: ${{ inputs.environment }}
-      artifact_name: package-deploy-${{ fromJSON(needs.parse-additional-parameters.outputs.vars).mapp_def_name }}
+      artifact_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).artifact_name }}
       artifact_file_name: ${{ needs.call-retrieve-package.outputs.artifact_file_name }}
-#TODO fix artifact name
 
   call-create-managed-app-definition:
     needs: 
@@ -181,7 +181,7 @@ jobs:
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       azure_admin_group_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_name }}
       azure_admin_group_role: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_role }}
-      
+
   call-create-managed-app:
     needs: 
       - parse-additional-parameters
@@ -214,7 +214,3 @@ jobs:
       ext_pg_ids_admin_password: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ext_pg_ids_admin_password }}
       ext_pg_cds_admin_user: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ext_pg_cds_admin_user }}
       ext_pg_cds_admin_password: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ext_pg_cds_admin_password }}
-      
-      
-      
-      
