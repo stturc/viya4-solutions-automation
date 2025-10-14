@@ -38,7 +38,7 @@ permissions:
   
 jobs:
   create-managed-app-definition:
-    name: deployment
+    name: create-managed-app-definition
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 
