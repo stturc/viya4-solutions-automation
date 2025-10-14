@@ -119,7 +119,7 @@
         }
     },
     "variables": {
-        "viyaDeployScriptName": "[concat(parameters('deploymentName'),'-ds-viya-deploy')]"
+        "viyaDeployScriptName": "[concat(parameters('deploymentName'), if(parameters('isUpdate'), '-ds-viya-update', '-ds-viya-deploy'))]"
     },
     "resources": [
         {
