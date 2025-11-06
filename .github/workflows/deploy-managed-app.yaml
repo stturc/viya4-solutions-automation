@@ -125,7 +125,9 @@ jobs:
           "step_update_spec_cas_flag": "N",
           "step_wait_for_cirrus_flag": "Y",
           "step_disable_cas_flag": "N",
-          "step_disable_nonessential_apps_run_time_flag": "N"
+          "step_disable_nonessential_apps_run_time_flag": "N",
+
+          "resource_owner": ""
         }
 
   determine-sas-solution:
@@ -166,6 +168,7 @@ jobs:
       environment: ${{ inputs.environment }}
       artifact_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).artifact_name }}
       artifact_file_name: ${{ needs.call-retrieve-package.outputs.artifact_file_name }}
+      resource_owner: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).resource_owner }}
 
   call-create-managed-app-definition:
     needs: 
@@ -181,6 +184,7 @@ jobs:
       location: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).location }}
       azure_admin_group_name: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_name }}
       azure_admin_group_role: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).azure_admin_group_role }}
+      resource_owner: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).resource_owner }}
 
   call-create-managed-app:
     needs: 
@@ -197,6 +201,7 @@ jobs:
       aks_cluster_sizing: ${{ inputs.aks_cluster_sizing }}
       viya_order_sas_uri: ${{ inputs.viya_order_sas_uri }}
       viya_admin_password: ${{ inputs.viya_admin_password }}
+      resource_owner: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).resource_owner }}
       ssh_public_key: ${{ inputs.ssh_public_key }}
       ip_allow_list: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).ip_allow_list }}
       step_install_superset_flag: ${{ fromJSON(needs.parse-additional-parameters.outputs.vars).step_install_superset_flag }}

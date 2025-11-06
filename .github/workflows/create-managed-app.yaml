@@ -45,6 +45,10 @@ on:
         description: 'Viya Admin Password'
         required: true
         type: string
+      resource_owner:
+        description: 'The value for the resource owner tag'
+        required: false
+        type: string
 
       step_install_superset_flag:
         description: 'Step Install Superset Flag'
@@ -128,7 +132,8 @@ jobs:
       tls_key_b64: ${{ inputs.tls_key_b64 || secrets.TLS_KEY_B64 }}
       tls_trusted_ca_certs_b64: ${{ inputs.tls_trusted_ca_certs_b64 || secrets.TLS_TRUSTED_CA_CERTS_B64 }}
       ssh_public_key: ${{ inputs.ssh_public_key || secrets.SSH_PUBLIC_KEY }}
-
+      resource_owner: ${{ inputs.resource_owner || github.actor }}
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -147,7 +152,7 @@ jobs:
         run: |
           # Create Managed Application
           # Github action variables
-          resourceowner=${{github.actor}}
+          resourceowner=${{ env.resource_owner }}
           
 
           echo "::group::Create Managed Application"

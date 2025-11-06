@@ -31,6 +31,10 @@ on:
         description: 'Azure AD Group Role for Managed Application Definition'
         required: false
         type: string
+      resource_owner:
+        description: 'The value for the resource owner tag'
+        required: false
+        type: string
 
 permissions:
   id-token: write
@@ -45,6 +49,7 @@ jobs:
     env:
       azure_admin_group_name: ${{ inputs.azure_admin_group_name || secrets.AZURE_ADMIN_GROUP_NAME }}
       azure_admin_group_role: ${{ inputs.azure_admin_group_role || secrets.AZURE_ADMIN_GROUP_ROLE }}
+      resource_owner: ${{ inputs.resource_owner || github.actor }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,7 +67,7 @@ jobs:
         id: create_mapp_rg
         run: |
           location="${{ inputs.location }}"
-          resource_owner="${{ github.actor }}"
+          resource_owner="${{ env.resource_owner }}"
           mapp_rg="${{ inputs.mapp_rg_name }}"
 
           echo "::group::Create Resource Group for Managed Application"
@@ -89,7 +94,7 @@ jobs:
         run: |
           mapp_rg="${{ steps.create_mapp_rg.outputs.mapp_rg }}"
           location="${{ inputs.location }}"
-          resource_owner="${{ github.actor }}"
+          resource_owner="${{ env.resource_owner }}"
           group_id="${{ steps.get_group_role_id.outputs.group_id }}"
           role_id="${{ steps.get_group_role_id.outputs.role_id }}"
           package_sas_uri="${{ inputs.package_sas_uri }}"

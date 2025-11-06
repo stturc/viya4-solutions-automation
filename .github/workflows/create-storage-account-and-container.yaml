@@ -30,6 +30,10 @@ on:
         description: 'Artifact file name to upload'
         required: true
         type: string
+      resource_owner:
+        description: 'The value for the resource owner tag'
+        required: false
+        type: string
     outputs:
       package_sas_uri: 
         value: ${{ jobs.create-storage-account-and-container.outputs.package_sas_uri }}
@@ -43,6 +47,9 @@ jobs:
     name: create-storage-account-and-container
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+
+    env:
+      resource_owner: ${{ inputs.resource_owner || github.actor }}
 
     outputs:
       package_sas_uri: ${{ steps.upload_package.outputs.package_sas_uri }}
@@ -66,7 +73,7 @@ jobs:
         run: |
           storage_account_rg="${{ inputs.storage_account_rg }}"
           location="${{ inputs.location }}"
-          resource_owner="${{ github.actor }}"
+          resource_owner="${{ env.resource_owner }}"
 
           echo "::group::Create/Use Resource group for Storage account"
           if ! az group show --name "${storage_account_rg}" &>/dev/null; then
@@ -80,7 +87,7 @@ jobs:
       - name: Create/Use Storage account and Storage container
         id: create_storage_account
         run: |
-          resource_owner="${{ github.actor }}"
+          resource_owner="${{ env.resource_owner }}"
 
           location="${{ inputs.location }}"
           storage_account_rg="${{ inputs.storage_account_rg }}"
